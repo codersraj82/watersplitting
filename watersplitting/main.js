@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
+import PSUComponent from "./PSUComponent.js";
 
 // Load the font
 const fontLoader = new FontLoader();
@@ -25,9 +26,9 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
-camera.position.z = 5;
-camera.position.y = 4;
-camera.position.x = -5;
+camera.position.z = 9;
+camera.position.y = 6;
+camera.position.x = 6;
 
 // Create a renderer
 const renderer = new THREE.WebGLRenderer();
@@ -62,6 +63,29 @@ directionalLight.shadow.camera.left = -10;
 directionalLight.shadow.camera.right = 10;
 directionalLight.shadow.camera.top = 10;
 directionalLight.shadow.camera.bottom = -10;
+
+// // Create a PSU instance and render it
+// const psu = new PSUComponent(
+//   document.body,
+//   12.34,
+//   5.67,
+//   new THREE.Vector3(0, 0, 0),
+//   1
+// );
+// Assume you already have a PSUComponent instance and a scene
+const psu = new PSUComponent(document.body, 7.0, 2.0);
+
+// Add the PSU to your existing scene
+scene.add(psu.psuGroup);
+
+// Move the PSU to a new position (e.g., (x: 5, y: 3, z: -2))
+psu.psuGroup.position.set(8, 0, -9);
+
+// Alternatively, you can increment its position relative to its current position
+// psu.psuGroup.position.x += 2; // Move 2 units along the x-axis
+// psu.psuGroup.position.y += 1; // Move 1 unit up
+// psu.psuGroup.rotation.z = Math.PI;
+// psu.psuGroup.rotation.x = Math.PI;
 
 // Create jar with less transparent bottom face
 const jarGeometry = new THREE.CylinderGeometry(3, 3, 5, 32, 1, true);
@@ -300,10 +324,10 @@ let lastBubbleTime = 0;
 
 // Function to generate bubbles (including white bubbles along the width of the bottom edges of electrodes)
 // Increase the density of blue and red bubbles
-const BLUE_BUBBLE_DENSITY = 0.02; // Increase density for blue bubbles
-const RED_BUBBLE_DENSITY = 0.04; // Double density for red bubbles
+const BLUE_BUBBLE_DENSITY = 1; // Increase density for blue bubbles
+const RED_BUBBLE_DENSITY = 2; // Double density for red bubbles
 
-// Function to generate bubbles
+// Generate bubble function
 function generateBubbles() {
   const currentTime = Date.now();
   if (currentTime - lastBubbleTime > BUBBLE_INTERVAL * 10) {
@@ -331,8 +355,8 @@ function generateBubbles() {
           scene.add(whiteBubble);
 
           // Add random upward and outward spread to cover more area
-          const randomTargetX = x + (Math.random() - 0.5) * 2; // Increase horizontal spread
-          const randomTargetZ = z + (Math.random() - 0.5) * 4; // Increase horizontal spread in liquid
+          const randomTargetX = x + (Math.random() - 0.5) * 2;
+          const randomTargetZ = z + (Math.random() - 0.5) * 4;
 
           bubbles.push({
             mesh: whiteBubble,
@@ -342,48 +366,49 @@ function generateBubbles() {
         }
       });
 
-      // Generate blue and red bubbles between electrodes with adjusted density
+      // Increase the number of blue and red bubbles by generating more frequently
+      const liquidTop =
+        liquid.position.y + liquid.geometry.parameters.height / 2;
+      const liquidBottom =
+        liquid.position.y - liquid.geometry.parameters.height / 2;
+
+      // Increased density for more blue and red bubbles
+      const blueBubbleDensity = 0.3; // Increase the density for blue bubbles
+      const redBubbleDensity = 0.6; // Make red bubbles twice as frequent as blue bubbles
+
       const electrodes = [
-        {
-          color: "blue",
-          electrode: negativePlate,
-          density: BLUE_BUBBLE_DENSITY,
-        },
-        {
-          color: "red",
-          electrode: positivePlate,
-          density: RED_BUBBLE_DENSITY, // Increased density for red bubbles
-        },
+        { color: "blue", electrode: negativePlate, density: blueBubbleDensity },
+        { color: "red", electrode: positivePlate, density: redBubbleDensity },
       ];
 
       electrodes.forEach(({ color, electrode, density }) => {
-        // Generate bubbles based on the density
-        for (let i = 0; i < density * 100; i++) {
-          // Increase the number of bubbles generated
-          const x = electrode.position.x + (Math.random() - 0.5) * 3;
-          const y = Math.random() * 6 - 3;
-          const z = Math.random() * 3 - 1.5;
+        for (let i = 0; i < 5; i++) {
+          // Increase the number of attempts to generate bubbles
+          if (Math.random() < density) {
+            const x = electrode.position.x + (Math.random() - 0.5) * 2;
+            const y = liquidBottom + Math.random() * (liquidTop - liquidBottom); // Constrain within liquid height
+            const z =
+              electrode.position.z +
+              (Math.random() - 0.5) * electrode.geometry.parameters.depth;
 
-          const bubbleMaterial =
-            color === "blue" ? blueBubbleMaterial : redBubbleMaterial;
-          const bubble = new THREE.Mesh(bubbleGeometry, bubbleMaterial);
-          bubble.position.set(x, y, z);
-          scene.add(bubble);
+            const bubbleMaterial =
+              color === "blue" ? blueBubbleMaterial : redBubbleMaterial;
+            const bubble = new THREE.Mesh(bubbleGeometry, bubbleMaterial);
+            bubble.position.set(x, y, z);
+            scene.add(bubble);
 
-          const target = electrode.position
-            .clone()
-            .add(
-              new THREE.Vector3(
-                Math.random() * 0.5 - 0.25,
-                Math.random() * 0.5 - 0.25,
-                Math.random() * 0.5 - 0.25
-              )
+            const target = new THREE.Vector3(
+              electrode.position.x + (Math.random() - 0.5) * 0.5,
+              y, // Bubble will remain within the liquid height range
+              electrode.position.z + (Math.random() - 0.5) * 0.5
             );
-          bubbles.push({
-            mesh: bubble,
-            target,
-            color,
-          });
+
+            bubbles.push({
+              mesh: bubble,
+              target,
+              color,
+            });
+          }
         }
       });
     }
