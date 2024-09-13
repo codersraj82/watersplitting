@@ -1,43 +1,37 @@
-// Import necessary modules
 import * as THREE from "three";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader.js";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { createKnob } from "./Knob.js";
 import { createBananaFemaleConnector } from "./BananaFemaleConnector.js";
 
-class PSUComponent {
+class PSUComponent extends THREE.Object3D {
   constructor(
-    scene,
-    camera,
-    container = document.body,
     voltage = 12.34,
     current = 5.67,
     position = new THREE.Vector3(0, 0, 0),
     scale = 1
   ) {
-    this.scene = scene;
-    this.camera = camera;
-    this.container = container;
+    super(); // Call the Object3D constructor
+
     this.voltage = voltage;
     this.current = current;
     this.font = null;
     this.voltageLabel = null;
     this.currentLabel = null;
-    this.position = position;
-    this.scale = scale;
+    this.position.copy(position);
+    this.scale.set(scale, scale, scale);
     this.knobMap = new Map(); // Use Map for knob lookups
+
     this.init();
   }
 
   async init() {
     // Create the PSU box
-    this.psuGroup = new THREE.Group();
     const psuGeometry = new THREE.BoxGeometry(10, 2, 6);
     const psuMaterial = new THREE.MeshStandardMaterial({ color: 0xd3d3d3 });
     const psu = new THREE.Mesh(psuGeometry, psuMaterial);
     psu.castShadow = true;
-    this.psuGroup.add(psu);
+    this.add(psu); // Add to Object3D (this)
 
     // Create the display
     const displayWidth = 6;
@@ -51,12 +45,7 @@ class PSUComponent {
     const displayMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
     const display = new THREE.Mesh(displayGeometry, displayMaterial);
     display.position.set(0, 0, 3 - displayDepth / 2);
-    this.psuGroup.add(display);
-
-    // Position and scale the PSU
-    this.psuGroup.position.copy(this.position);
-    this.psuGroup.scale.set(this.scale, this.scale, this.scale);
-    this.scene.add(this.psuGroup);
+    this.add(display); // Add to Object3D (this)
 
     // Load Font and setup knobs
     const loader = new FontLoader();
@@ -72,37 +61,32 @@ class PSUComponent {
         console.error("An error occurred while loading the font:", error);
       }
     );
-    console.log("Red Ring:", this.redRing);
-    console.log("Blue Ring:", this.blueRing);
-    // Setup lighting in main scene
+
+    // Setup lighting if needed (you can skip this if lighting is already in the scene)
     this.setupLighting();
 
     // Handle mouse events
     window.addEventListener("mousedown", (event) => this.onMouseDown(event));
 
-    // Start animation loop
+    // Start animation loop (if necessary)
     this.animate();
   }
 
   animate() {
     requestAnimationFrame(() => this.animate()); // Schedule the next frame
-
-    // Update controls (if using OrbitControls)
-    if (this.controls) {
-      this.controls.update();
-    }
   }
 
   setupLighting() {
-    if (!this.scene.getObjectByName("ambientLight")) {
+    // If lighting is not added to the scene, add it to this component
+    if (!this.getObjectByName("ambientLight")) {
       const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
       directionalLight.position.set(10, 10, 10);
       directionalLight.castShadow = true;
-      this.scene.add(directionalLight);
+      this.add(directionalLight);
 
       const ambientLight = new THREE.AmbientLight(0x404040);
       ambientLight.name = "ambientLight";
-      this.scene.add(ambientLight);
+      this.add(ambientLight);
     }
   }
 
@@ -130,7 +114,7 @@ class PSUComponent {
       );
     }
 
-    this.psuGroup.add(label);
+    this.add(label); // Add to Object3D (this)
     return label;
   }
 
@@ -140,8 +124,8 @@ class PSUComponent {
       const currentText = `${current.toFixed(2)} A`;
 
       // Remove previous labels if they exist
-      if (this.voltageLabel) this.psuGroup.remove(this.voltageLabel);
-      if (this.currentLabel) this.psuGroup.remove(this.currentLabel);
+      if (this.voltageLabel) this.remove(this.voltageLabel);
+      if (this.currentLabel) this.remove(this.currentLabel);
 
       // Create new voltage and current labels
       this.voltageLabel = this.createLabel(
@@ -177,8 +161,8 @@ class PSUComponent {
       );
 
       // Add knobs to the PSU group
-      this.psuGroup.add(this.voltageKnob);
-      this.psuGroup.add(this.currentKnob);
+      this.add(this.voltageKnob);
+      this.add(this.currentKnob);
 
       // Map knobs for quick lookup
       this.knobMap.set(this.voltageKnob, "voltage");
@@ -198,15 +182,11 @@ class PSUComponent {
         0x0000ff
       );
 
-      // Log for debugging
-      console.log("Red Ring:", this.redRing);
-      console.log("Blue Ring:", this.blueRing);
-
       this.redRing.rotation.x = Math.PI;
       this.blueRing.rotation.x = Math.PI;
 
-      this.psuGroup.add(this.redRing);
-      this.psuGroup.add(this.blueRing);
+      this.add(this.redRing);
+      this.add(this.blueRing);
     } catch (error) {
       console.error("Error setting up knobs:", error);
     }
@@ -247,18 +227,12 @@ class PSUComponent {
 
         if (knobType === "voltage") {
           this.voltage = (this.voltage + 1) % 13; // Cycle voltage from 0 to 12
-          console.log(`Voltage Knob Clicked: New Voltage = ${this.voltage}`);
           this.updateDisplay(this.voltage, this.current);
         } else if (knobType === "current") {
           this.current = (this.current + 1) % 6; // Cycle current from 0 to 5
-          console.log(`Current Knob Clicked: New Current = ${this.current}`);
           this.updateDisplay(this.voltage, this.current);
         }
-      } else {
-        console.log("Clicked object is not a knob");
       }
-    } else {
-      console.log("No intersections detected");
     }
   }
 }

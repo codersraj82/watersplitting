@@ -1,62 +1,59 @@
-// Import necessary modules
 import * as THREE from "three";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader.js";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { createKnob } from "./Knob.js";
 import { createBananaFemaleConnector } from "./BananaFemaleConnector.js";
+import * as CANNON from "cannon-es";
 
-class PSUComponent {
+class PSUComponent extends THREE.Object3D {
   constructor(
-    scene,
-    camera,
-    container = document.body,
+    world, // Cannon.js physics world
+    camera, // PerspectiveCamera for raycasting
     voltage = 12.34,
     current = 5.67,
     position = new THREE.Vector3(0, 0, 0),
     scale = 1
   ) {
-    this.scene = scene;
-    this.camera = camera;
-    this.container = container;
-    this.voltage = voltage;
-    this.current = current;
-    this.font = null;
-    this.voltageLabel = null;
-    this.currentLabel = null;
-    this.position = position;
-    this.scale = scale;
-    this.knobMap = new Map(); // Use Map for knob lookups
+    super();
+    this.world = world;
+    this.camera = camera; // Set the camera
+    this.voltage = parseFloat(voltage);
+    this.current = parseFloat(current);
+    this.position.copy(position);
+    this.scale.set(scale, scale, scale);
+    this.knobMap = new Map();
     this.init();
   }
 
   async init() {
-    // Create the PSU box
-    this.psuGroup = new THREE.Group();
+    // Create the PSU box in Three.js
     const psuGeometry = new THREE.BoxGeometry(10, 2, 6);
     const psuMaterial = new THREE.MeshStandardMaterial({ color: 0xd3d3d3 });
     const psu = new THREE.Mesh(psuGeometry, psuMaterial);
     psu.castShadow = true;
-    this.psuGroup.add(psu);
+    this.add(psu);
 
-    // Create the display
-    const displayWidth = 6;
-    const displayHeight = 1.5;
-    const displayDepth = 0.2;
-    const displayGeometry = new THREE.BoxGeometry(
-      displayWidth,
-      displayHeight,
-      displayDepth
-    );
+    // Create the PSU box in Cannon.js (physics body)
+    const shape = new CANNON.Box(new CANNON.Vec3(5, 1, 3)); // Half extents
+    this.psuBody = new CANNON.Body({
+      mass: 1, // You can adjust the mass
+      position: new CANNON.Vec3(
+        this.position.x,
+        this.position.y,
+        this.position.z
+      ),
+      shape: shape,
+    });
+
+    this.psuBody.position.copy(this.position);
+    this.world.addBody(this.psuBody);
+
+    // Create the display in Three.js
+    const displayGeometry = new THREE.BoxGeometry(6, 1.5, 0.2);
     const displayMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
     const display = new THREE.Mesh(displayGeometry, displayMaterial);
-    display.position.set(0, 0, 3 - displayDepth / 2);
-    this.psuGroup.add(display);
-
-    // Position and scale the PSU
-    this.psuGroup.position.copy(this.position);
-    this.psuGroup.scale.set(this.scale, this.scale, this.scale);
-    this.scene.add(this.psuGroup);
+    display.position.set(0, 0, 3 - 0.1);
+    this.add(display);
 
     // Load Font and setup knobs
     const loader = new FontLoader();
@@ -72,38 +69,18 @@ class PSUComponent {
         console.error("An error occurred while loading the font:", error);
       }
     );
-    console.log("Red Ring:", this.redRing);
-    console.log("Blue Ring:", this.blueRing);
-    // Setup lighting in main scene
-    this.setupLighting();
 
-    // Handle mouse events
     window.addEventListener("mousedown", (event) => this.onMouseDown(event));
-
-    // Start animation loop
-    this.animate();
   }
 
-  animate() {
-    requestAnimationFrame(() => this.animate()); // Schedule the next frame
+  setupLighting(scene) {
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(10, 10, 10);
+    directionalLight.castShadow = true;
+    scene.add(directionalLight);
 
-    // Update controls (if using OrbitControls)
-    if (this.controls) {
-      this.controls.update();
-    }
-  }
-
-  setupLighting() {
-    if (!this.scene.getObjectByName("ambientLight")) {
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-      directionalLight.position.set(10, 10, 10);
-      directionalLight.castShadow = true;
-      this.scene.add(directionalLight);
-
-      const ambientLight = new THREE.AmbientLight(0x404040);
-      ambientLight.name = "ambientLight";
-      this.scene.add(ambientLight);
-    }
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
   }
 
   createLabel(text, position, baseSize = 0.4, color = 0xffffff) {
@@ -130,20 +107,18 @@ class PSUComponent {
       );
     }
 
-    this.psuGroup.add(label);
+    this.add(label);
     return label;
   }
 
   updateDisplay(voltage, current) {
     if (this.font) {
-      const voltageText = `${voltage.toFixed(2)} V`;
-      const currentText = `${current.toFixed(2)} A`;
+      const voltageText = `${parseFloat(voltage).toFixed(2)} V`; // Ensure voltage is a number
+      const currentText = `${parseFloat(current).toFixed(2)} A`; // Ensure current is a number
 
-      // Remove previous labels if they exist
-      if (this.voltageLabel) this.psuGroup.remove(this.voltageLabel);
-      if (this.currentLabel) this.psuGroup.remove(this.currentLabel);
+      if (this.voltageLabel) this.remove(this.voltageLabel);
+      if (this.currentLabel) this.remove(this.currentLabel);
 
-      // Create new voltage and current labels
       this.voltageLabel = this.createLabel(
         voltageText,
         { x: 0, y: 0.25, z: 3.01 },
@@ -160,11 +135,10 @@ class PSUComponent {
   }
 
   async setupKnobs() {
-    console.log("Setting up knobs...");
     const knobSize = 0.3;
 
     try {
-      // Create knobs
+      // Create and position the knobs
       this.voltageKnob = await createKnob(
         new THREE.Vector3(3.5, 0.6, 3.05),
         "V",
@@ -176,15 +150,15 @@ class PSUComponent {
         knobSize
       );
 
-      // Add knobs to the PSU group
-      this.psuGroup.add(this.voltageKnob);
-      this.psuGroup.add(this.currentKnob);
+      // Add the knobs to the component
+      this.add(this.voltageKnob);
+      this.add(this.currentKnob);
 
-      // Map knobs for quick lookup
+      // Map the knobs to their types
       this.knobMap.set(this.voltageKnob, "voltage");
       this.knobMap.set(this.currentKnob, "current");
 
-      // Create connectors
+      // Create and position the banana connectors
       this.redRing = createBananaFemaleConnector(
         new THREE.Vector3(-4, 0.3, 3.05),
         0.1,
@@ -198,22 +172,29 @@ class PSUComponent {
         0x0000ff
       );
 
-      // Log for debugging
-      console.log("Red Ring:", this.redRing);
-      console.log("Blue Ring:", this.blueRing);
-
       this.redRing.rotation.x = Math.PI;
       this.blueRing.rotation.x = Math.PI;
 
-      this.psuGroup.add(this.redRing);
-      this.psuGroup.add(this.blueRing);
+      // Add the rings to the component
+      this.add(this.redRing);
+      this.add(this.blueRing);
+
+      // Debugging: Log positions
+      console.log("Knobs and rings added");
+      console.log("Red Ring Position:", this.redRing.position);
+      console.log("Blue Ring Position:", this.blueRing.position);
     } catch (error) {
       console.error("Error setting up knobs:", error);
     }
   }
 
+  updatePhysics() {
+    // Sync Three.js position and rotation with Cannon.js body
+    this.position.copy(this.psuBody.position);
+    this.quaternion.copy(this.psuBody.quaternion);
+  }
+
   getRingPositions() {
-    // Ensure the rings are set up before accessing
     if (this.redRing && this.blueRing) {
       return {
         redRingPosition: this.redRing.position.clone(),
@@ -226,6 +207,11 @@ class PSUComponent {
   }
 
   onMouseDown(event) {
+    if (!this.camera) {
+      console.error("Camera is not set.");
+      return;
+    }
+
     const mouse = new THREE.Vector2(
       (event.clientX / window.innerWidth) * 2 - 1,
       -(event.clientY / window.innerHeight) * 2 + 1
@@ -234,10 +220,7 @@ class PSUComponent {
     const raycaster = new THREE.Raycaster();
     raycaster.setFromCamera(mouse, this.camera);
 
-    // Check for intersections with the knobs
     const intersects = raycaster.intersectObjects([...this.knobMap.keys()]);
-
-    console.log("Intersects:", intersects); // Log intersections for debugging
 
     if (intersects.length > 0) {
       const clickedObject = intersects[0].object;
@@ -246,19 +229,13 @@ class PSUComponent {
         const knobType = this.knobMap.get(clickedObject);
 
         if (knobType === "voltage") {
-          this.voltage = (this.voltage + 1) % 13; // Cycle voltage from 0 to 12
-          console.log(`Voltage Knob Clicked: New Voltage = ${this.voltage}`);
+          this.voltage = (parseFloat(this.voltage) + 1) % 13;
           this.updateDisplay(this.voltage, this.current);
         } else if (knobType === "current") {
-          this.current = (this.current + 1) % 6; // Cycle current from 0 to 5
-          console.log(`Current Knob Clicked: New Current = ${this.current}`);
+          this.current = (parseFloat(this.current) + 1) % 6;
           this.updateDisplay(this.voltage, this.current);
         }
-      } else {
-        console.log("Clicked object is not a knob");
       }
-    } else {
-      console.log("No intersections detected");
     }
   }
 }
