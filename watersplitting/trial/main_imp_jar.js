@@ -1,6 +1,6 @@
 // main.js
 import * as THREE from "three";
-import WaterSplittingModule from "./WaterSplittingModule.js";
+import WaterSplittingModule from "../WaterSplittingModule.js";
 
 // Set up container
 const container = document.getElementById("container");

@@ -8,12 +8,16 @@ import { createBananaFemaleConnector } from "./BananaFemaleConnector.js";
 
 class PSUComponent {
   constructor(
+    scene,
+    camera,
     container = document.body,
     voltage = 12.34,
     current = 5.67,
     position = new THREE.Vector3(0, 0, 0),
     scale = 1
   ) {
+    this.scene = scene;
+    this.camera = camera;
     this.container = container;
     this.voltage = voltage;
     this.current = current;
@@ -22,39 +26,17 @@ class PSUComponent {
     this.currentLabel = null;
     this.position = position;
     this.scale = scale;
-
+    this.knobMap = new Map(); // Use Map for knob lookups
     this.init();
   }
 
   init() {
-    // Scene, Camera, Renderer setup
-    this.scene = new THREE.Scene();
-    this.camera = new THREE.PerspectiveCamera(
-      75,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      1000
-    );
-    this.renderer = new THREE.WebGLRenderer();
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.container.appendChild(this.renderer.domElement);
-    this.renderer.shadowMap.enabled = true;
-
-    // Add OrbitControls
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.enableDamping = true;
-    this.controls.dampingFactor = 0.05;
-    this.controls.enablePan = false;
-    this.controls.maxPolarAngle = Math.PI / 2;
-    this.controls.update();
-
     // Create the PSU box
     this.psuGroup = new THREE.Group();
     const psuGeometry = new THREE.BoxGeometry(10, 2, 6);
     const psuMaterial = new THREE.MeshStandardMaterial({ color: 0xd3d3d3 });
     const psu = new THREE.Mesh(psuGeometry, psuMaterial);
     psu.castShadow = true;
-    psu.position.set(0, 0, 0);
     this.psuGroup.add(psu);
 
     // Create the display
@@ -77,36 +59,55 @@ class PSUComponent {
     this.scene.add(this.psuGroup);
 
     // Load Font and setup knobs
-    this.loader = new FontLoader();
-    this.loader.load("/fonts/helvetiker_bold.typeface.json", (loadedFont) => {
-      this.font = loadedFont;
-      this.updateDisplay(this.voltage, this.current);
-      this.setupKnobs();
-    });
+    const loader = new FontLoader();
+    loader.load(
+      "./helvetiker_bold.typeface.json",
+      (loadedFont) => {
+        this.font = loadedFont;
+        this.updateDisplay(this.voltage, this.current);
+        this.setupKnobs();
+      },
+      undefined,
+      (error) => {
+        console.error("An error occurred while loading the font:", error);
+      }
+    );
 
-    // Lighting setup
+    // Setup lighting in main scene
     this.setupLighting();
-
-    // Camera position
-    this.camera.position.set(0, 5, 15);
 
     // Handle mouse events
     window.addEventListener("mousedown", (event) => this.onMouseDown(event));
 
+    // Start animation loop
     this.animate();
   }
 
-  setupLighting() {
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-    directionalLight.position.set(10, 10, 10);
-    directionalLight.castShadow = true;
-    this.scene.add(directionalLight);
+  animate() {
+    requestAnimationFrame(() => this.animate()); // Schedule the next frame
 
-    const ambientLight = new THREE.AmbientLight(0x404040);
-    this.scene.add(ambientLight);
+    // Update controls (if using OrbitControls)
+    if (this.controls) {
+      this.controls.update();
+    }
+  }
+
+  setupLighting() {
+    if (!this.scene.getObjectByName("ambientLight")) {
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+      directionalLight.position.set(10, 10, 10);
+      directionalLight.castShadow = true;
+      this.scene.add(directionalLight);
+
+      const ambientLight = new THREE.AmbientLight(0x404040);
+      ambientLight.name = "ambientLight";
+      this.scene.add(ambientLight);
+    }
   }
 
   createLabel(text, position, baseSize = 0.4, color = 0xffffff) {
+    if (!this.font) return;
+
     const textGeometry = new TextGeometry(text, {
       font: this.font,
       size: baseSize,
@@ -137,9 +138,11 @@ class PSUComponent {
       const voltageText = `${voltage.toFixed(2)} V`;
       const currentText = `${current.toFixed(2)} A`;
 
+      // Remove previous labels if they exist
       if (this.voltageLabel) this.psuGroup.remove(this.voltageLabel);
       if (this.currentLabel) this.psuGroup.remove(this.currentLabel);
 
+      // Create new voltage and current labels
       this.voltageLabel = this.createLabel(
         voltageText,
         { x: 0, y: 0.25, z: 3.01 },
@@ -155,47 +158,68 @@ class PSUComponent {
     }
   }
 
-  setupKnobs() {
+  async setupKnobs() {
     if (!this.font) return;
 
     const knobSize = 0.3;
 
-    this.voltageKnob = createKnob(
-      new THREE.Vector3(3.5, 0.6, 3.05),
-      "V",
-      this.font,
-      knobSize
-    );
+    try {
+      // Create knobs
+      this.voltageKnob = await createKnob(
+        new THREE.Vector3(3.5, 0.6, 3.05),
+        "V",
+        knobSize
+      );
 
-    this.currentKnob = createKnob(
-      new THREE.Vector3(3.5, -0.6, 3.05),
-      "A",
-      this.font,
-      knobSize
-    );
+      this.currentKnob = await createKnob(
+        new THREE.Vector3(3.5, -0.6, 3.05),
+        "A",
+        knobSize
+      );
 
-    this.psuGroup.add(this.voltageKnob);
-    this.psuGroup.add(this.currentKnob);
+      // Add knobs to the PSU group
+      this.psuGroup.add(this.voltageKnob);
+      this.psuGroup.add(this.currentKnob);
 
-    // Create connectors
-    const redRing = createBananaFemaleConnector(
-      new THREE.Vector3(-4, 0.3, 3.05),
-      0.1,
-      0.05,
-      0xff0000
-    );
-    const blueRing = createBananaFemaleConnector(
-      new THREE.Vector3(-4, -0.3, 3.05),
-      0.1,
-      0.05,
-      0x0000ff
-    );
+      // Map knobs for quick lookup
+      this.knobMap.set(this.voltageKnob, "voltage");
+      this.knobMap.set(this.currentKnob, "current");
 
-    redRing.rotation.x = Math.PI;
-    blueRing.rotation.x = Math.PI;
+      // Create connectors
+      this.redRing = createBananaFemaleConnector(
+        new THREE.Vector3(-4, 0.3, 3.05),
+        0.1,
+        0.05,
+        0xff0000
+      );
+      this.blueRing = createBananaFemaleConnector(
+        new THREE.Vector3(-4, -0.3, 3.05),
+        0.1,
+        0.05,
+        0x0000ff
+      );
 
-    this.psuGroup.add(redRing);
-    this.psuGroup.add(blueRing);
+      this.redRing.rotation.x = Math.PI;
+      this.blueRing.rotation.x = Math.PI;
+
+      this.psuGroup.add(this.redRing);
+      this.psuGroup.add(this.blueRing);
+    } catch (error) {
+      console.error("Error setting up knobs:", error);
+    }
+  }
+
+  getRingPositions() {
+    // Ensure the rings are set up before accessing
+    if (this.redRing && this.blueRing) {
+      return {
+        redRingPosition: this.redRing.position.clone(),
+        blueRingPosition: this.blueRing.position.clone(),
+      };
+    } else {
+      console.warn("Rings are not set up yet.");
+      return null;
+    }
   }
 
   onMouseDown(event) {
@@ -207,30 +231,32 @@ class PSUComponent {
     const raycaster = new THREE.Raycaster();
     raycaster.setFromCamera(mouse, this.camera);
 
-    const intersects = raycaster.intersectObjects([
-      this.voltageKnob,
-      this.currentKnob,
-    ]);
+    // Check for intersections with the knobs
+    const intersects = raycaster.intersectObjects([...this.knobMap.keys()]);
+
+    console.log("Intersects:", intersects); // Log intersections for debugging
 
     if (intersects.length > 0) {
       const clickedObject = intersects[0].object;
 
-      if (clickedObject === this.voltageKnob) {
-        this.voltage = (this.voltage + 1) % 13; // Cycle voltage from 0 to 12
-        console.log(`Voltage Knob Clicked: New Voltage = ${this.voltage}`); // Debugging
-        this.updateDisplay(this.voltage, this.current);
-      } else if (clickedObject === this.currentKnob) {
-        this.current = (this.current + 1) % 6; // Cycle current from 0 to 5
-        console.log(`Current Knob Clicked: New Current = ${this.current}`); // Debugging
-        this.updateDisplay(this.voltage, this.current);
-      }
-    }
-  }
+      if (this.knobMap.has(clickedObject)) {
+        const knobType = this.knobMap.get(clickedObject);
 
-  animate() {
-    requestAnimationFrame(() => this.animate());
-    this.controls.update();
-    this.renderer.render(this.scene, this.camera);
+        if (knobType === "voltage") {
+          this.voltage = (this.voltage + 1) % 13; // Cycle voltage from 0 to 12
+          console.log(`Voltage Knob Clicked: New Voltage = ${this.voltage}`);
+          this.updateDisplay(this.voltage, this.current);
+        } else if (knobType === "current") {
+          this.current = (this.current + 1) % 6; // Cycle current from 0 to 5
+          console.log(`Current Knob Clicked: New Current = ${this.current}`);
+          this.updateDisplay(this.voltage, this.current);
+        }
+      } else {
+        console.log("Clicked object is not a knob");
+      }
+    } else {
+      console.log("No intersections detected");
+    }
   }
 }
 

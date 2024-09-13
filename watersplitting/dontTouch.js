@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
-import PSUComponent from "./PSUComponent.js";
+// Import the power supply unit module
 
 // Load the font
 const fontLoader = new FontLoader();
@@ -26,9 +26,9 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
-camera.position.z = 9;
-camera.position.y = 6;
-camera.position.x = 6;
+camera.position.z = 5;
+camera.position.y = 4;
+camera.position.x = -5;
 
 // Create a renderer
 const renderer = new THREE.WebGLRenderer();
@@ -64,28 +64,10 @@ directionalLight.shadow.camera.right = 10;
 directionalLight.shadow.camera.top = 10;
 directionalLight.shadow.camera.bottom = -10;
 
-// // Create a PSU instance and render it
-// const psu = new PSUComponent(
-//   document.body,
-//   12.34,
-//   5.67,
-//   new THREE.Vector3(0, 0, 0),
-//   1
-// );
-// Assume you already have a PSUComponent instance and a scene
-const psu = new PSUComponent(document.body, 7.0, 2.0);
-
-// Add the PSU to your existing scene
-scene.add(psu.psuGroup);
-
-// Move the PSU to a new position (e.g., (x: 5, y: 3, z: -2))
-psu.psuGroup.position.set(8, 0, -9);
-
-// Alternatively, you can increment its position relative to its current position
-// psu.psuGroup.position.x += 2; // Move 2 units along the x-axis
-// psu.psuGroup.position.y += 1; // Move 1 unit up
-// psu.psuGroup.rotation.z = Math.PI;
-// psu.psuGroup.rotation.x = Math.PI;
+// Create and add the power supply unit to the scene
+// Create PSU
+// const psu = new PSU(scene, camera, renderer, controls);
+// scene.add(psu);
 
 // Create jar with less transparent bottom face
 const jarGeometry = new THREE.CylinderGeometry(3, 3, 5, 32, 1, true);

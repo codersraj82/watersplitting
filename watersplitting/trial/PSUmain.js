@@ -3,8 +3,8 @@ import * as THREE from "three";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader.js";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { createKnob } from "./Knob.js";
-import { createBananaFemaleConnector } from "./BananaFemaleConnector.js";
+import { createKnob } from "../Knob.js";
+import { createBananaFemaleConnector } from "../BananaFemaleConnector.js";
 // Scene, Camera, Renderer setup
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
