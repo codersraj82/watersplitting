@@ -24,7 +24,7 @@ async function createKnob(position, label = "", size = 0.5) {
 
   // Create a cylindrical knob with the specified size
   const knobGeometry = new THREE.CylinderGeometry(size, size, 0.2, 32);
-  const knobMaterial = new THREE.MeshStandardMaterial({ color: 0x666666 }); // Grey color
+  const knobMaterial = new THREE.MeshStandardMaterial({ color: 0x483c32 }); // Grey color
   const knob = new THREE.Mesh(knobGeometry, knobMaterial);
   knob.position.copy(position);
   knob.rotation.x = Math.PI / 2; // Rotate the cylinder to stand upright

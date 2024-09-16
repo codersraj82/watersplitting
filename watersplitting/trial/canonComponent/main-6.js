@@ -2,11 +2,11 @@ import * as THREE from "three";
 import * as CANNON from "cannon-es";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { PSUComponent } from "./PSUComponent.js";
-import CableComponent from "./CableComponent"; // Import the CableComponent
+import CableComponent from "./CableComponent-1"; // Import the CableComponent
 
 // Set up the basic Three.js scene
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x808080);
+scene.background = new THREE.Color(0xf0f0f0);
 
 // Set up camera
 const camera = new THREE.PerspectiveCamera(
@@ -15,7 +15,7 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
-camera.position.set(2, 2, 10);
+camera.position.set(0, 5, 10);
 
 // Set up renderer
 const renderer = new THREE.WebGLRenderer();
@@ -51,7 +51,7 @@ world.addBody(groundBody);
 
 // Add a ground plane in Three.js
 const groundGeometry = new THREE.PlaneGeometry(100, 100);
-const groundMaterial = new THREE.MeshStandardMaterial({ color: 0xa0522d });
+const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x808080 });
 const ground = new THREE.Mesh(groundGeometry, groundMaterial);
 ground.rotation.x = -Math.PI / 2; // Rotate to be flat
 ground.receiveShadow = true;
@@ -59,11 +59,11 @@ scene.add(ground);
 ground.position.set(0, -3, 0);
 // Add AxesHelper (X: red, Y: green, Z: blue)
 const axesHelper = new THREE.AxesHelper(10); // Increase size of the axes to 10 units
-//scene.add(axesHelper);
+scene.add(axesHelper);
 
 // Add GridHelper (optional) to make the ground plane more visible
 const gridHelper = new THREE.GridHelper(100, 100); // Size and divisions
-//scene.add(gridHelper);
+scene.add(gridHelper);
 gridHelper.position.set(0, -3, 0);
 
 // Create PSUComponent and add it to the scene
@@ -78,7 +78,7 @@ const psu = new PSUComponent(
   camera,
   12,
   5,
-  new THREE.Vector3(10, 6.5, -10), // Position it at (0, 1, 0)
+  new THREE.Vector3(10, -2, -3), // Position it at (0, 1, 0)
   1
 );
 scene.add(psu);
@@ -88,23 +88,13 @@ world.addConstraint(psuLockConstraint);
 
 // Add cable
 const cable = new CableComponent(scene, world, {
-  length: 0.2, // Custom length of the cable
-  numSegments: 300, // Number of segments
-  radius: 0.15, // Radius of the cable
+  length: 2, // Custom length of the cable
+  numSegments: 200, // Number of segments
+  radius: 0.1, // Radius of the cable
   color: 0xff0000, // Cable color (red)
-  startPosition: [5.6, 7.1, -6.85], // Starting position of the cable
-  endPosition: [1.5, 4, 0], // Ending position of the cable
+  startPosition: [5.5, -1.5, 0], // Starting position of the cable
+  endPosition: [1.6, 4.3, 0], // Ending position of the cable
 });
-// Add cable
-const cable1 = new CableComponent(scene, world, {
-  length: 0.2, // Custom length of the cable
-  numSegments: 300, // Number of segments
-  radius: 0.15, // Radius of the cable
-  color: 0x0000ff, // Cable color (red)
-  startPosition: [5.6, 6, -6.85], // Starting position of the cable
-  endPosition: [-1.5, 4.2, 0.15], // Ending position of the cable
-});
-
 /************* experiment setup************** */
 // Create jar with less transparent bottom face
 const jarGeometry = new THREE.CylinderGeometry(3, 3, 5, 32, 1, true);
@@ -199,6 +189,42 @@ const slotDepth = 0.5;
 const slotGeometry = new THREE.BoxGeometry(slotWidth, slotHeight, slotDepth);
 const slotMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
 
+// cover physics
+// Create cover physics body
+const coverShape = new CANNON.Cylinder(3.2, 3.2, 0.5, 32); // Note: Cannon.js uses radii
+const coverBody = new CANNON.Body({
+  mass: 100, // Set mass for dynamics
+  position: new CANNON.Vec3(
+    cover.position.x,
+    cover.position.y,
+    cover.position.z
+  ), // Initial position
+  type: CANNON.Body.DYNAMIC,
+});
+coverBody.addShape(coverShape);
+world.addBody(coverBody);
+
+console.log("Cover Position:", cover.position);
+console.log("Cover Rotation:", cover.rotation);
+console.log("Cover Body Position:", coverBody.position);
+console.log("Cover Body Rotation:", coverBody.rotation);
+
+function updateVisualObjectFromPhysics(visualObject, physicsObject) {
+  if (visualObject && physicsObject) {
+    visualObject.position.set(
+      physicsObject.position.x,
+      physicsObject.position.y,
+      physicsObject.position.z
+    );
+    visualObject.quaternion.set(
+      physicsObject.quaternion.x,
+      physicsObject.quaternion.y,
+      physicsObject.quaternion.z,
+      physicsObject.quaternion.w
+    );
+  }
+}
+
 const slot1 = new THREE.Mesh(slotGeometry, slotMaterial);
 slot1.position.set(-1.5, 1, 0);
 cover.add(slot1);
@@ -219,7 +245,7 @@ const octahedronMaterial = new THREE.MeshStandardMaterial({
 const octahedron = new THREE.Mesh(octahedronGeometry, octahedronMaterial);
 octahedron.rotation.x = Math.PI / 2; // Rotate 90 degrees around the X-axis
 octahedron.scale.set(0.5, 1, 0.5); // Scale to make it longer along the Y-axis
-octahedron.position.y = -1.5; // Position it at the bottom of the jar
+octahedron.position.y = -2.5; // Position it at the bottom of the jar
 octahedron.castShadow = true;
 octahedron.receiveShadow = true;
 scene.add(octahedron);
@@ -456,71 +482,6 @@ function updateBubbles() {
     }
   });
 }
-/************ Rack *********** */
-
-// Function to create a two-shelf metallic rack
-function createRack() {
-  const rackGroup = new THREE.Group();
-
-  // Create rack material
-  const darkGreenMaterial = new THREE.MeshStandardMaterial({
-    color: 0x004d00, // Dark green
-    metalness: 0.8, // Metallic look
-    roughness: 0.2,
-  });
-
-  // Rack dimensions
-  const rackHeight = 9; // 1.5 units tall
-  const shelfWidth = 12; // 1 unit wide
-  const shelfDepth = 6; // 0.5 unit deep
-  const legRadius = 0.3; // Small radius for metallic legs
-  const legHeight = rackHeight; // Height of the legs
-
-  // Create vertical legs
-  const legGeometry = new THREE.CylinderGeometry(
-    legRadius,
-    legRadius,
-    legHeight,
-    32
-  );
-  const leg1 = new THREE.Mesh(legGeometry, darkGreenMaterial);
-  const leg2 = new THREE.Mesh(legGeometry, darkGreenMaterial);
-  const leg3 = new THREE.Mesh(legGeometry, darkGreenMaterial);
-  const leg4 = new THREE.Mesh(legGeometry, darkGreenMaterial);
-
-  // Position legs at corners
-  leg1.position.set(-shelfWidth / 2, legHeight / 2, -shelfDepth / 2);
-  leg2.position.set(shelfWidth / 2, legHeight / 2, -shelfDepth / 2);
-  leg3.position.set(-shelfWidth / 2, legHeight / 2, shelfDepth / 2);
-  leg4.position.set(shelfWidth / 2, legHeight / 2, shelfDepth / 2);
-
-  // Add legs to rack group
-  rackGroup.add(leg1, leg2, leg3, leg4);
-
-  // Create shelves
-  const shelfGeometry = new THREE.BoxGeometry(shelfWidth, 0.05, shelfDepth);
-  const shelf1 = new THREE.Mesh(shelfGeometry, darkGreenMaterial);
-  const shelf2 = new THREE.Mesh(shelfGeometry, darkGreenMaterial);
-
-  // Position shelves
-  shelf1.position.set(0, rackHeight / 2 - 4, 0); // Lower shelf
-  shelf2.position.set(0, rackHeight / 2 - 0.25, 0); // Upper shelf
-
-  // Add shelves to rack group
-  rackGroup.add(shelf1, shelf2);
-
-  return rackGroup;
-}
-
-// Adding the rack to your scene
-const rack = createRack();
-// Set position and rotation
-rack.position.set(10, 6, -10); // Position the rack in the scene
-
-scene.add(rack);
-rack.rotation.x = Math.PI; // No rotation on the X-axis
-rack.rotation.y = 0; // 45 degrees rotation on the Y-axis
-rack.rotation.z = 0; // No rotation on the Z-axis
 
 // Add OrbitControls for better camera movement
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -534,9 +495,10 @@ function animate() {
   world.step(1 / 120);
 
   // Update the PSU and cable physics
+  // Update the Three.js visuals from the physics world
+  updateVisualObjectFromPhysics(cover, coverBody);
   psu.updatePhysics();
   cable.update();
-  cable1.update();
   // Generate and update bubbles
   generateBubbles();
   updateBubbles();

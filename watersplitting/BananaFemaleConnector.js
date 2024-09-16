@@ -1,4 +1,3 @@
-// BananaFemaleConnector.js
 import * as THREE from "three";
 
 /**
@@ -9,7 +8,8 @@ import * as THREE from "three";
  * @param {THREE.Color | number} ringColor - The color of the connector ring.
  * @returns {THREE.Mesh} - The banana female connector ring mesh.
  */
-function createBananaFemaleConnector(
+
+async function createBananaFemaleConnector(
   position,
   ringRadius = 0.2,
   thickness = 0.05,
@@ -23,7 +23,9 @@ function createBananaFemaleConnector(
 
   // Position the ring
   ringMesh.position.copy(position);
-  ringMesh.rotation.x = Math.PI / 2; // Align the torus
+
+  // Rotate the ring to align vertically along the Y-axis
+  ringMesh.rotation.z = Math.PI / 2; // Rotate to align vertically across the Y-axis
 
   return ringMesh;
 }

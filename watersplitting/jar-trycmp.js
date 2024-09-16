@@ -2,12 +2,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
-import { World, Body, Plane, Vec3, Box } from "cannon-es";
 // Import the power supply unit module
-
-import * as dat from "dat.gui";
-import PSUComponent from "./PSUComponent-main.js";
-import Cable from "./Cable";
 
 // Load the font
 const fontLoader = new FontLoader();
@@ -434,110 +429,6 @@ function updateBubbles() {
   });
 }
 
-/*  **********************   work only this below side *******
-
-**************************************************************
-
-*/
-
-// Load the font and create PSUComponent
-// const fontLoader = new FontLoader();
-// let font;
-let blueRingPosition = null;
-let redRingPosition = null;
-
-fontLoader.load("./helvetiker_bold.typeface.json", (loadedFont) => {
-  font = loadedFont;
-
-  // Create PSUComponent after font is loaded
-  const psu = new PSUComponent(
-    scene,
-    camera,
-    document.body,
-    12.34,
-    5.67,
-    new THREE.Vector3(9, 0, 0),
-    1
-  );
-  psu.font = font;
-  psu.updateDisplay(psu.voltage, psu.current);
-  psu.setupKnobs();
-
-  // Now get the ring positions
-  const positions = psu.getRingPositions();
-  console.log(positions);
-
-  let x_ring, y_ring, z_ring, rx_ring, ry_ring, rz_ring;
-
-  if (positions && positions.length > 0) {
-    x_ring = positions[0].x;
-    y_ring = positions[0].y;
-    z_ring = positions[0].z;
-    rx_ring = positions[0].rx;
-    ry_ring = positions[0].ry;
-    rz_ring = positions[0].rz;
-
-    blueRingPosition = new THREE.Vector3(x_ring, y_ring, z_ring);
-    redRingPosition = new THREE.Vector3(x_ring, y_ring, z_ring);
-  }
-
-  // Set up GUI controls for voltage and current
-  const gui = new dat.GUI();
-  const controlsFolder = gui.addFolder("Controls");
-  controlsFolder.add(psu, "voltage", 0, 20).onChange(() => {
-    psu.updateDisplay(psu.voltage, psu.current);
-  });
-  controlsFolder.add(psu, "current", 0, 10).onChange(() => {
-    psu.updateDisplay(psu.voltage, psu.current);
-  });
-  controlsFolder.open();
-});
-
-/*****************  Cable*********************
- * ********** Cable***********************
- */
-
-// Create the physics world
-const world = new World();
-world.gravity.set(0, 0, 0); // Set gravity to zero to keep boxes fixed
-
-// Define fixed distance
-const fixedDistance = 100;
-
-// Create a large ground plane
-const groundGeometry = new THREE.PlaneGeometry(50, 50); // Increase size
-const groundMaterial = new THREE.ShadowMaterial({ opacity: 0.2 });
-const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-ground.rotation.x = -Math.PI / 2; // Rotate the plane to be horizontal
-ground.position.y = 0; // Position the ground at y = 0
-scene.add(ground);
-
-// Create ground physics body
-const groundBody = new Body({
-  mass: 0, // Static body
-  position: new Vec3(0, 0, 0),
-  shape: new Plane(),
-});
-groundBody.quaternion.setFromAxisAngle(new Vec3(1, 0, 0), -Math.PI / 2);
-world.addBody(groundBody);
-
-console.log("Red Ring Position:", redRingPosition);
-console.log("Blue Ring Position:", blueRingPosition);
-
-// Create a Cable instance with the fixed positions of the boxes
-const cable = new Cable(scene, world, {
-  startPoint: new Vec3(1.5, 4, 0), //{x: -4, y: 0.3, z: 3.05}
-  endPoint: new Vec3(5, 0.3, 3.05),
-  radius: 0.1,
-  color: 0xff0000, // Color for the cable
-  bananaConnectorSize: { radius: 0.2, height: 0.5 },
-  crocodileConnectorSize: { width: 0.5, height: 0.1, depth: 0.1 },
-  connectorColor: 0xffff00, // Color for the banana connector
-  clipColor: 0xff0000, // Color for the crocodile clip
-  numSegments: 30, // Increase the number of segments for a smoother cable
-});
-
-/******************* Cable End*************** */
 // Animation loop
 function animate() {
   requestAnimationFrame(animate);
@@ -549,32 +440,6 @@ function animate() {
   generateBubbles();
   updateBubbles();
 
-  // Update the physics world
-  world.step(1 / 60);
-
-  // Update the boxes' positions based on their physics bodies
-  // box1.position.copy(box1Body.position);
-  // box1.quaternion.copy(box1Body.quaternion);
-
-  // box2.position.copy(box2Body.position);
-  // box2.quaternion.copy(box2Body.quaternion);
-
-  // Update the cable's start and end points to stay connected to the boxes
-  // cable.updateCable(
-  //   new Vec3(box1.position.x, box1.position.y, box1.position.z),
-  //   new Vec3(box2.position.x, box2.position.y, box2.position.z)
-  // );
-
-  // Update the cable's physics and render the scene
-  // cable.update();
-
-  // Update the cable's physics and render the scene
-  //cable.update();
-  try {
-    this.cable.update(); // Update cable
-  } catch (error) {
-    console.error("Error updating cable:", error);
-  }
   // Update octahedron rotation and vibration
   octahedron.rotation.x += 1;
   octahedron.rotation.z += 0.001;

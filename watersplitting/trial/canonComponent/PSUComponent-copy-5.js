@@ -29,7 +29,7 @@ class PSUComponent extends THREE.Object3D {
   async init() {
     // Create the PSU box in Three.js
     const psuGeometry = new THREE.BoxGeometry(10, 2, 6);
-    const psuMaterial = new THREE.MeshStandardMaterial({ color: 0x00a36c });
+    const psuMaterial = new THREE.MeshStandardMaterial({ color: 0xd3d3d3 });
     this.psu = new THREE.Mesh(psuGeometry, psuMaterial);
     this.psu.castShadow = true;
     this.add(this.psu);
@@ -37,7 +37,7 @@ class PSUComponent extends THREE.Object3D {
     // Create the PSU box in Cannon.js (physics body)
     const shape = new CANNON.Box(new CANNON.Vec3(5, 1, 3)); // Half extents
     this.psuBody = new CANNON.Body({
-      mass: 0, // You can adjust the mass
+      mass: 1, // You can adjust the mass
       position: new CANNON.Vec3(
         this.position.x,
         this.position.y,
@@ -288,4 +288,4 @@ class PSUComponent extends THREE.Object3D {
   }
 }
 
-export { PSUComponent };
+export default PSUComponent;

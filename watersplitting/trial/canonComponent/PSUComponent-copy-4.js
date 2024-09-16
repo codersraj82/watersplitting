@@ -29,7 +29,7 @@ class PSUComponent extends THREE.Object3D {
   async init() {
     // Create the PSU box in Three.js
     const psuGeometry = new THREE.BoxGeometry(10, 2, 6);
-    const psuMaterial = new THREE.MeshStandardMaterial({ color: 0x00a36c });
+    const psuMaterial = new THREE.MeshStandardMaterial({ color: 0xd3d3d3 });
     this.psu = new THREE.Mesh(psuGeometry, psuMaterial);
     this.psu.castShadow = true;
     this.add(this.psu);
@@ -37,7 +37,7 @@ class PSUComponent extends THREE.Object3D {
     // Create the PSU box in Cannon.js (physics body)
     const shape = new CANNON.Box(new CANNON.Vec3(5, 1, 3)); // Half extents
     this.psuBody = new CANNON.Body({
-      mass: 0, // You can adjust the mass
+      mass: 1, // You can adjust the mass
       position: new CANNON.Vec3(
         this.position.x,
         this.position.y,
@@ -51,7 +51,7 @@ class PSUComponent extends THREE.Object3D {
     const displayGeometry = new THREE.BoxGeometry(6, 1.5, 0.2);
     const displayMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
     const display = new THREE.Mesh(displayGeometry, displayMaterial);
-    display.position.set(0, 0, 2.9); // Adjusted position for display
+    display.position.set(0, 0, 3 - 0.1);
     this.psu.add(display);
 
     // Load Font and setup knobs and sockets
@@ -166,14 +166,11 @@ class PSUComponent extends THREE.Object3D {
 
   async setupSockets() {
     const socketGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.2, 16);
-
-    // Create the materials for the sockets
-    const redMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-    const blueMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff });
+    const socketMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
 
     // Create two banana female sockets on the front face of PSU box
-    const createSocket = (position, material) => {
-      const socket = new THREE.Mesh(socketGeometry, material);
+    const createSocket = (position) => {
+      const socket = new THREE.Mesh(socketGeometry, socketMaterial);
       socket.position.copy(position);
       socket.rotation.x = Math.PI / 2; // Face the Z-axis
       this.psu.add(socket); // Attach socket to the PSU box
@@ -182,12 +179,13 @@ class PSUComponent extends THREE.Object3D {
       const shape = new CANNON.Cylinder(0.1, 0.1, 0.2, 16);
       const socketBody = new CANNON.Body({
         mass: 1,
-        position: new CANNON.Vec3(
-          this.psu.position.x + position.x,
-          this.psu.position.y + position.y,
-          this.psu.position.z + position.z
-        ),
+        position: new CANNON.Vec3(position.x, position.y, position.z),
         // Fixed position to ensure it doesn't move relative to PSU
+        position: new CANNON.Vec3(
+          this.psuBody.position.x + position.x,
+          this.psuBody.position.y + position.y,
+          this.psuBody.position.z + position.z
+        ),
       });
       socketBody.addShape(shape);
       this.world.addBody(socketBody);
@@ -197,24 +195,22 @@ class PSUComponent extends THREE.Object3D {
 
     // Positions for the banana female sockets on the front face of PSU box
     const frontFaceZ = 3; // Position on the Z-axis of the PSU box
-    const displayWidth = 6; // Width of the display
-    const offsetX = -4.5; // Negative X position for left of the display
-    const offsetY = 0.5; // Vertical positioning
+    const offsetX = 4.5; // Adjust this value to position sockets left of the display
+    const offsetY = 0.7; // Adjust this value to position vertically
 
     const leftSocketPosition1 = new THREE.Vector3(
-      offsetX, // X position
-      offsetY, // Y position
+      -offsetX,
+      offsetY,
       frontFaceZ
-    ); // Z position on the front face
-
+    ); // Adjusted position
     const leftSocketPosition2 = new THREE.Vector3(
-      offsetX, // X position
-      -offsetY, // Y position
+      -offsetX,
+      -offsetY,
       frontFaceZ
-    ); // Z position on the front face
+    ); // Adjusted position
 
-    this.socket1 = createSocket(leftSocketPosition1, redMaterial);
-    this.socket2 = createSocket(leftSocketPosition2, blueMaterial);
+    this.socket1 = createSocket(leftSocketPosition1);
+    this.socket2 = createSocket(leftSocketPosition2);
 
     // Attach sockets' physics bodies to PSU box physics body
     this.psuBody.addShape(
@@ -243,10 +239,10 @@ class PSUComponent extends THREE.Object3D {
     // Ensure the sockets' positions are updated accordingly
     if (this.socket1 && this.socket2) {
       this.socket1.socket.position.copy(
-        this.psu.position.clone().add(new THREE.Vector3(-4.5, 0.5, 3))
+        this.psu.position.clone().add(new THREE.Vector3(-4.5, 0.7, 3))
       );
       this.socket2.socket.position.copy(
-        this.psu.position.clone().add(new THREE.Vector3(-4.5, -0.5, 3))
+        this.psu.position.clone().add(new THREE.Vector3(-4.5, -0.7, 3))
       );
     }
   }
@@ -288,4 +284,4 @@ class PSUComponent extends THREE.Object3D {
   }
 }
 
-export { PSUComponent };
+export default PSUComponent;
