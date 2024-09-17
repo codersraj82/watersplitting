@@ -17,7 +17,7 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
-camera.position.set(2, 2, 10);
+camera.position.set(1, 3, 12);
 
 // Set up renderer
 const renderer = new THREE.WebGLRenderer();
@@ -27,7 +27,7 @@ document.body.appendChild(renderer.domElement);
 
 // Set up lighting
 const light = new THREE.DirectionalLight(0xffffff, 1);
-light.position.set(0, 5, 10);
+light.position.set(1, 5, 10);
 light.castShadow = true;
 scene.add(light);
 
@@ -55,6 +55,7 @@ world.addBody(groundBody);
 const groundGeometry = new THREE.PlaneGeometry(100, 100);
 const groundMaterial = new THREE.MeshStandardMaterial({ color: 0xa0522d });
 const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+ground.position.set(0, -1, 0);
 ground.rotation.x = -Math.PI / 2; // Rotate to be flat
 ground.receiveShadow = true;
 
@@ -102,7 +103,7 @@ world.addConstraint(psuLockConstraint);
 
 // Add cable
 const cable = new CableComponent(scene, world, {
-  length: 0.2, // Custom length of the cable
+  length: 2, // Custom length of the cable
   numSegments: 300, // Number of segments
   radius: 0.15, // Radius of the cable
   color: 0xff0000, // Cable color (red)
@@ -111,7 +112,7 @@ const cable = new CableComponent(scene, world, {
 });
 // Add cable
 const cable1 = new CableComponent(scene, world, {
-  length: 0.2, // Custom length of the cable
+  length: 2, // Custom length of the cable
   numSegments: 300, // Number of segments
   radius: 0.15, // Radius of the cable
   color: 0x0000ff, // Cable color (blue)
@@ -150,7 +151,7 @@ const thickGlassMaterial = new THREE.MeshPhysicalMaterial({
 
 // Create jar
 const jar = new THREE.Mesh(jarGeometry, glassMaterial);
-jar.castShadow = true;
+//jar.castShadow = true;
 jar.receiveShadow = true;
 scene.add(jar);
 
@@ -571,23 +572,100 @@ loader.load("/fonts/helvetiker_bold.typeface.json", function (font) {
       bevelEnabled: false,
     }
   );
+  const oxygenTextGeometry = new TextGeometry("Oxygen", {
+    font: font,
+    size: 0.4,
+    height: 0.1,
+    curveSegments: 12,
+    bevelEnabled: false,
+  });
+  const CarbondioxideTextGeometry = new TextGeometry("Carbon dioxide", {
+    font: font,
+    size: 0.4,
+    height: 0.1,
+    curveSegments: 12,
+    bevelEnabled: false,
+  });
+  const OERTextGeometry = new TextGeometry("OER", {
+    font: font,
+    size: 0.4,
+    height: 0.1,
+    curveSegments: 12,
+    bevelEnabled: false,
+  });
+  const ECRTextGeometry = new TextGeometry("ECR", {
+    font: font,
+    size: 0.4,
+    height: 0.1,
+    curveSegments: 12,
+    bevelEnabled: false,
+  });
+  const PEMTextGeometry = new TextGeometry("PEM", {
+    font: font,
+    size: 0.4,
+    height: 0.1,
+    curveSegments: 12,
+    bevelEnabled: false,
+  });
+  const C1C2extGeometry = new TextGeometry("Liquid C1C2 product", {
+    font: font,
+    size: 0.4,
+    height: 0.1,
+    curveSegments: 12,
+    bevelEnabled: false,
+  });
+  const gasproductextGeometry = new TextGeometry("Gas Product (CO)", {
+    font: font,
+    size: 0.4,
+    height: 0.1,
+    curveSegments: 12,
+    bevelEnabled: false,
+  });
 
   // Create Material for the text
-  const textMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+  const textMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
 
   // Create Mesh for both texts
   const copyrightTextMesh = new THREE.Mesh(copyrightTextGeometry, textMaterial);
+  const oxygenTextMesh = new THREE.Mesh(oxygenTextGeometry, textMaterial);
+  const carbondioxideTextMesh = new THREE.Mesh(
+    CarbondioxideTextGeometry,
+    textMaterial
+  );
+  const PEMTextMesh = new THREE.Mesh(PEMTextGeometry, textMaterial);
+  const OERTextMesh = new THREE.Mesh(OERTextGeometry, textMaterial);
+  const ECRTextMesh = new THREE.Mesh(ECRTextGeometry, textMaterial);
+  const C1C2TextMesh = new THREE.Mesh(C1C2extGeometry, textMaterial);
+  const gasproductTextMesh = new THREE.Mesh(
+    gasproductextGeometry,
+    textMaterial
+  );
   const developedByTextMesh = new THREE.Mesh(
     developedByTextGeometry,
     textMaterial
   );
 
   // Position the meshes
-  copyrightTextMesh.position.set(-20, -1, 1); // Adjust position as needed
+  copyrightTextMesh.position.set(-10, -1, -8); // Adjust position as needed
   developedByTextMesh.position.set(-20, 4, -8); // Adjust position as needed
 
   // Add the text meshes to the scene
   scene.add(copyrightTextMesh);
+  scene.add(oxygenTextMesh);
+  scene.add(carbondioxideTextMesh);
+  scene.add(PEMTextMesh);
+  scene.add(OERTextMesh);
+  scene.add(ECRTextMesh);
+  scene.add(gasproductTextMesh);
+  scene.add(C1C2TextMesh);
+  // Text label positions
+  oxygenTextMesh.position.set(-14, 3, 0);
+  carbondioxideTextMesh.position.set(3, 2.1, 3);
+  PEMTextMesh.position.set(-2, -2, 1);
+  OERTextMesh.position.set(-10, 4.5, 0);
+  ECRTextMesh.position.set(1, 4.5, 0);
+  gasproductTextMesh.position.set(5, 3, 0);
+  C1C2TextMesh.position.set(7, -2, 0);
 
   copyrightTextMesh.rotation.y = Math.PI / 4;
   // scene.add(developedByTextMesh);
@@ -630,10 +708,18 @@ function createThickHollowStraightTube(
     true
   );
   const outerMaterial = new THREE.MeshStandardMaterial({
-    color: 0x00ffff,
+    color: 0xffffff,
     transparent: true,
-    opacity: 0.5,
+    transmission: 1,
+
+    opacity: 0.2,
     side: THREE.DoubleSide,
+    roughness: 0,
+    metalness: 0,
+    clearcoat: 1,
+    clearcoatRoughness: 0,
+    reflectivity: 0.9,
+    depthWrite: false,
   });
 
   const innerGeometry = new THREE.CylinderGeometry(
@@ -645,10 +731,18 @@ function createThickHollowStraightTube(
     true
   );
   const innerMaterial = new THREE.MeshStandardMaterial({
-    color: 0x808080,
+    color: 0xffffff,
     transparent: true,
-    opacity: 0.5,
+    //transmission: 1,
+    opacity: 0.2, // Less transparent
+
     side: THREE.DoubleSide,
+    roughness: 0,
+    metalness: 0,
+    clearcoat: 1,
+    clearcoatRoughness: 0,
+    reflectivity: 0.9,
+    depthWrite: false,
   });
 
   const tube = new THREE.Mesh(outerGeometry, outerMaterial);
@@ -684,10 +778,10 @@ function createHollowGlassRing(
   innerRadius,
   length,
   segments,
-  outerColor = 0x00ffff,
-  innerColor = 0x808080,
-  outerOpacity = 0.5,
-  innerOpacity = 0.5,
+  outerColor = 0xffffff,
+  innerColor = 0xffffff,
+  outerOpacity = 0.3,
+  innerOpacity = 0.3,
   transpnt = true
 ) {
   // Outer ring geometry and material
@@ -792,16 +886,40 @@ scene.add(tubeRingClone);
 //(1.2, 0.4, 0.3, 64)
 const membrane = createHollowGlassRing(
   1.2, // outerRadius
-  0, // innerRadius
+  0.5, // innerRadius
   0.2, // length
-  64, // segments
+  120, // segments
   0xff0000, // outerColor (red)
-  0xffffff, // innerColor (blue)
+  0xff0000, // innerColor (blue)
   1, // outerOpacity (70% opacity)
   1, // innerOpacity (30% opacity)
-  false
+  true
 );
 scene.add(membrane);
+// Paper disc
+// Function to create a vertically placed blue paper disc
+function createBluePaperDisc() {
+  const geometry = new THREE.CircleGeometry(1, 32); // Create a circle geometry with radius 1 and 32 segments
+  const material = new THREE.MeshBasicMaterial({
+    color: 0x0000ff, // Blue color
+    side: THREE.DoubleSide, // Ensure the disc is visible from both sides
+  });
+
+  const disc = new THREE.Mesh(geometry, material);
+
+  // Set rotation to place the disc vertically (on the YZ plane)
+  disc.rotation.x = Math.PI;
+  disc.rotation.y = Math.PI / 2;
+
+  // Add the disc to the scene
+  scene.add(disc);
+
+  return disc;
+}
+
+// Example usage:
+const blueDisc = createBluePaperDisc();
+blueDisc.position.set(-3.5, -1.5, 0); // Position the disc as needed
 
 // positions of groups
 jargroup.position.set(-10, -1, 0);
@@ -976,7 +1094,7 @@ function moveYBubbleAlongPath(ybubble, pathStart, pathEnd, speed) {
 // Function to update all ybubbles and move them along the path
 function updateYBubbles() {
   const pathStart = new THREE.Vector3(-10, -1.5, 0); // Starting position of the path
-  const pathEnd = new THREE.Vector3(1.8, -1.5, 0); // End position of the path
+  const pathEnd = new THREE.Vector3(1.7, -1.5, 0); // End position of the path
   const speed = 0.1; // Speed of the ybubbles
 
   yBubbles.forEach((ybubble) => {
@@ -1007,8 +1125,10 @@ function logSceneObjects() {
 
 logSceneObjects();
 //const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-directionalLight.position.set(10, 1, 10).normalize();
+const directionalLight1 = new THREE.DirectionalLight(0xffffff, 1);
+directionalLight1.position.set(10, 1, 10).normalize();
+const directionalLight2 = new THREE.DirectionalLight(0xffffff, 1);
+directionalLight2.position.set(5, 7, 6).normalize();
 
 // Animation loop
 function animate() {
