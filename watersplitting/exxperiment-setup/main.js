@@ -1,8 +1,8 @@
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { PSUComponent } from "./PSUComponent.js";
-import CableComponent from "./CableComponent"; // Import the CableComponent
+import { PSUComponent } from "../public/src/PSUComponent";
+import CableComponent from "../public/src/CableComponent"; // Import the CableComponent
 
 // Set up the basic Three.js scene
 const scene = new THREE.Scene();

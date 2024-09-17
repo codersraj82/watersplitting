@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { PSUComponent } from "./PSUComponent.js";
+import { PSUComponent } from "./PSUComponent";
 import CableComponent from "./CableComponent"; // Import the CableComponent
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader.js";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
@@ -78,8 +78,8 @@ world.addBody(psuAnchorBody);
 const psu = new PSUComponent(
   world,
   camera,
-  12,
-  5,
+  1.23,
+  0.5,
   new THREE.Vector3(10, 6.5, -10), // Position it at (0, 1, 0)
   1
 );
@@ -529,57 +529,51 @@ rack.rotation.z = 0; // No rotation on the Z-axis
 // Load the Font for 3D Text
 const loader = new FontLoader();
 
-loader.load(
-  "../../public/fonts/helvetiker_bold.typeface.json",
-  function (font) {
-    // Create Text Geometry for "Concept and Copyright..."
-    const copyrightTextGeometry = new TextGeometry("© Dr. Jasmin Shaikh", {
+loader.load("/fonts/helvetiker_bold.typeface.json", function (font) {
+  // Create Text Geometry for "Concept and Copyright..."
+  const copyrightTextGeometry = new TextGeometry("© Dr. Jasmin Shaikh", {
+    font: font,
+    size: 0.7,
+    height: 0.1, // depth of the text
+    curveSegments: 12,
+    bevelEnabled: false,
+  });
+
+  // Create Text Geometry for "Program developed by..."
+  const developedByTextGeometry = new TextGeometry(
+    "Program developed by Sarafaraj Shaikh",
+    {
       font: font,
-      size: 0.7,
-      height: 0.1, // depth of the text
+      size: 0.4,
+      height: 0.1,
       curveSegments: 12,
       bevelEnabled: false,
-    });
+    }
+  );
 
-    // Create Text Geometry for "Program developed by..."
-    const developedByTextGeometry = new TextGeometry(
-      "Program developed by Sarafaraj Shaikh",
-      {
-        font: font,
-        size: 0.4,
-        height: 0.1,
-        curveSegments: 12,
-        bevelEnabled: false,
-      }
-    );
+  // Create Material for the text
+  const textMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
 
-    // Create Material for the text
-    const textMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+  // Create Mesh for both texts
+  const copyrightTextMesh = new THREE.Mesh(copyrightTextGeometry, textMaterial);
+  const developedByTextMesh = new THREE.Mesh(
+    developedByTextGeometry,
+    textMaterial
+  );
 
-    // Create Mesh for both texts
-    const copyrightTextMesh = new THREE.Mesh(
-      copyrightTextGeometry,
-      textMaterial
-    );
-    const developedByTextMesh = new THREE.Mesh(
-      developedByTextGeometry,
-      textMaterial
-    );
+  // Position the meshes
+  copyrightTextMesh.position.set(-20, -1, 1); // Adjust position as needed
+  developedByTextMesh.position.set(-20, 4, -8); // Adjust position as needed
 
-    // Position the meshes
-    copyrightTextMesh.position.set(-20, -1, 1); // Adjust position as needed
-    developedByTextMesh.position.set(-20, 4, -8); // Adjust position as needed
+  // Add the text meshes to the scene
+  scene.add(copyrightTextMesh);
 
-    // Add the text meshes to the scene
-    scene.add(copyrightTextMesh);
+  copyrightTextMesh.rotation.y = Math.PI / 4;
+  // scene.add(developedByTextMesh);
 
-    copyrightTextMesh.rotation.y = Math.PI / 4;
-    // scene.add(developedByTextMesh);
-
-    // Optional: Adjust rotation, scale or any other properties of the meshes
-    // Example: copyrightTextMesh.rotation.y = Math.PI / 4;
-  }
-);
+  // Optional: Adjust rotation, scale or any other properties of the meshes
+  // Example: copyrightTextMesh.rotation.y = Math.PI / 4;
+});
 // Add OrbitControls for better camera movement
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.update();

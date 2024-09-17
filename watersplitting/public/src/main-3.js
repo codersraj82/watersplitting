@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { PSUComponent } from "./PSUComponent.js";
+import { PSUComponent } from "./PSUComponent";
 import CableComponent from "./CableComponent"; // Import the CableComponent
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader.js";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
@@ -57,7 +57,19 @@ const groundMaterial = new THREE.MeshStandardMaterial({ color: 0xa0522d });
 const ground = new THREE.Mesh(groundGeometry, groundMaterial);
 ground.rotation.x = -Math.PI / 2; // Rotate to be flat
 ground.receiveShadow = true;
-scene.add(ground);
+
+// function to give name to objects of three.js
+
+// Function to add object to scene and track its name
+const trackedObjects = {};
+function addObjectToScene(name, object) {
+  object.name = name; // Assign a name to the object
+  scene.add(object); // Add object to the scene
+  trackedObjects[name] = object; // Store reference in trackedObjects
+  console.log(`Added object: ${name}`);
+}
+// scene.add(ground);
+addObjectToScene("ground", ground);
 ground.position.set(0, -3, 0);
 // Add AxesHelper (X: red, Y: green, Z: blue)
 const axesHelper = new THREE.AxesHelper(10); // Increase size of the axes to 10 units
@@ -78,8 +90,8 @@ world.addBody(psuAnchorBody);
 const psu = new PSUComponent(
   world,
   camera,
-  12,
-  5,
+  1.23,
+  0.5,
   new THREE.Vector3(10, 6.5, -10), // Position it at (0, 1, 0)
   1
 );
@@ -203,11 +215,11 @@ const slotMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
 
 const slot1 = new THREE.Mesh(slotGeometry, slotMaterial);
 slot1.position.set(-1.5, 1, 0);
-cover.add(slot1);
+//cover.add(slot1);
 
 const slot2 = new THREE.Mesh(slotGeometry, slotMaterial);
 slot2.position.set(1.5, 1, 0);
-cover.add(slot2);
+//cover.add(slot2);
 
 scene.add(cover);
 
@@ -235,13 +247,14 @@ const electrodeMaterial = new THREE.MeshStandardMaterial({
 const negativePlateGeometry = new THREE.BoxGeometry(0.1, 6, 2);
 const negativePlateMaterial = new THREE.MeshStandardMaterial({
   color: 0x002868, // Brighter blue color
-  ...electrodeMaterial,
+  metalness: 1,
+  roughness: 0.3,
 });
 const negativePlate = new THREE.Mesh(
   negativePlateGeometry,
   negativePlateMaterial
 );
-negativePlate.position.set(-1.5, 1, 0); // Position it inside the liquid, extending through the slot
+negativePlate.position.set(-10, 1, 0); // Position it inside the liquid, extending through the slot
 negativePlate.castShadow = true;
 negativePlate.receiveShadow = true;
 scene.add(negativePlate);
@@ -249,7 +262,8 @@ scene.add(negativePlate);
 const positivePlateGeometry = new THREE.BoxGeometry(0.1, 6, 2);
 const positivePlateMaterial = new THREE.MeshStandardMaterial({
   color: 0xbf0a30, // Brighter red color
-  ...electrodeMaterial,
+  metalness: 1,
+  roughness: 0.3,
 });
 const positivePlate = new THREE.Mesh(
   positivePlateGeometry,
@@ -314,6 +328,15 @@ const blueBubbleMaterial = new THREE.MeshPhysicalMaterial({
 });
 const redBubbleMaterial = new THREE.MeshPhysicalMaterial({
   color: 0xff0000, // Red color
+  opacity: 0.8,
+  transparent: true,
+  depthWrite: false,
+  clearcoat: 1,
+  reflectivity: 0.7,
+  transmission: 1,
+});
+const yellowBubbleMaterial = new THREE.MeshPhysicalMaterial({
+  color: 0xffff00, // Red color
   opacity: 0.8,
   transparent: true,
   depthWrite: false,
@@ -529,60 +552,402 @@ rack.rotation.z = 0; // No rotation on the Z-axis
 // Load the Font for 3D Text
 const loader = new FontLoader();
 
-loader.load(
-  "../../public/fonts/helvetiker_bold.typeface.json",
-  function (font) {
-    // Create Text Geometry for "Concept and Copyright..."
-    const copyrightTextGeometry = new TextGeometry("© Dr. Jasmin Shaikh", {
+loader.load("/fonts/helvetiker_bold.typeface.json", function (font) {
+  // Create Text Geometry for "Concept and Copyright..."
+  const copyrightTextGeometry = new TextGeometry("© Dr. Jasmin Shaikh", {
+    font: font,
+    size: 0.7,
+    height: 0.1, // depth of the text
+    curveSegments: 12,
+    bevelEnabled: false,
+  });
+
+  // Create Text Geometry for "Program developed by..."
+  const developedByTextGeometry = new TextGeometry(
+    "Program developed by Sarafaraj Shaikh",
+    {
       font: font,
-      size: 0.7,
-      height: 0.1, // depth of the text
+      size: 0.4,
+      height: 0.1,
       curveSegments: 12,
       bevelEnabled: false,
-    });
+    }
+  );
 
-    // Create Text Geometry for "Program developed by..."
-    const developedByTextGeometry = new TextGeometry(
-      "Program developed by Sarafaraj Shaikh",
-      {
-        font: font,
-        size: 0.4,
-        height: 0.1,
-        curveSegments: 12,
-        bevelEnabled: false,
-      }
-    );
+  // Create Material for the text
+  const textMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
 
-    // Create Material for the text
-    const textMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+  // Create Mesh for both texts
+  const copyrightTextMesh = new THREE.Mesh(copyrightTextGeometry, textMaterial);
+  const developedByTextMesh = new THREE.Mesh(
+    developedByTextGeometry,
+    textMaterial
+  );
 
-    // Create Mesh for both texts
-    const copyrightTextMesh = new THREE.Mesh(
-      copyrightTextGeometry,
-      textMaterial
-    );
-    const developedByTextMesh = new THREE.Mesh(
-      developedByTextGeometry,
-      textMaterial
-    );
+  // Position the meshes
+  copyrightTextMesh.position.set(-20, -1, 1); // Adjust position as needed
+  developedByTextMesh.position.set(-20, 4, -8); // Adjust position as needed
 
-    // Position the meshes
-    copyrightTextMesh.position.set(-20, -1, 1); // Adjust position as needed
-    developedByTextMesh.position.set(-20, 4, -8); // Adjust position as needed
+  // Add the text meshes to the scene
+  scene.add(copyrightTextMesh);
 
-    // Add the text meshes to the scene
-    scene.add(copyrightTextMesh);
+  copyrightTextMesh.rotation.y = Math.PI / 4;
+  // scene.add(developedByTextMesh);
 
-    copyrightTextMesh.rotation.y = Math.PI / 4;
-    // scene.add(developedByTextMesh);
+  // Optional: Adjust rotation, scale or any other properties of the meshes
+  // Example: copyrightTextMesh.rotation.y = Math.PI / 4;
+});
 
-    // Optional: Adjust rotation, scale or any other properties of the meshes
-    // Example: copyrightTextMesh.rotation.y = Math.PI / 4;
-  }
-);
+// create group
+
+// Create a group for all components
+const group = new THREE.Group();
+group.add(jar);
+group.add(bottom);
+group.add(liquid);
+group.add(cover);
+group.add(octahedron);
+//group.add(positivePlate);
+//group.add(negativePlate);
+scene.add(group);
+
+group.remove(octahedron);
+//group.remove(negativePlate);
+
+/**  Tube formation */
+// Function to create a hollow glass tube with one end curved
+// Function to create a straight hollow glass tube
+// Function to create a straight hollow glass tube with increased thickness
+// Create thick hollow straight tube
+// Create thick hollow transparent tube
+// Create thick hollow transparent tube
+function createThickHollowStraightTube(
+  outerRadius,
+  innerRadius,
+  length,
+  segments
+) {
+  const outerGeometry = new THREE.CylinderGeometry(
+    outerRadius,
+    outerRadius,
+    length,
+    segments,
+    1,
+    true
+  );
+  const outerMaterial = new THREE.MeshStandardMaterial({
+    color: 0x00ffff,
+    transparent: true,
+    opacity: 0.5,
+    side: THREE.DoubleSide,
+  });
+
+  const innerGeometry = new THREE.CylinderGeometry(
+    innerRadius,
+    innerRadius,
+    length,
+    segments,
+    1,
+    true
+  );
+  const innerMaterial = new THREE.MeshStandardMaterial({
+    color: 0x808080,
+    transparent: true,
+    opacity: 0.5,
+    side: THREE.DoubleSide,
+  });
+
+  const tube = new THREE.Mesh(outerGeometry, outerMaterial);
+  const innerTube = new THREE.Mesh(innerGeometry, innerMaterial);
+  innerTube.position.z = 0; // Position correctly
+  tube.add(innerTube);
+
+  return tube;
+}
+
+// Add the thick hollow transparent tube to the scene
+const tube = createThickHollowStraightTube(0.6, 0.4, 4, 64);
+tube.rotation.x = Math.PI / 2; // Rotate to place horizontally
+tube.rotation.z = Math.PI / 2; // Rotate to place horizontally
+tube.position.set(4.7, -1, 0);
+scene.add(tube);
+const o2Ltube = createThickHollowStraightTube(0.2, 0.1, 1, 64);
+const co2Rtube = createThickHollowStraightTube(0.2, 0.1, 1, 64);
+//scene.add(o2Ltube);
+scene.add(co2Rtube);
+tube.position.set(4.7, -1, 0);
+co2Rtube.rotation.x = Math.PI / 2; // Rotate to place horizontally
+co2Rtube.rotation.z = Math.PI / 2; // Rotate to place horizontally
+co2Rtube.position.set(6, -2, 0);
+o2Ltube.rotation.x = Math.PI / 2; // Rotate to place horizontally
+o2Ltube.rotation.z = Math.PI / 2; // Rotate to place horizontally
+o2Ltube.position.set(-13, -2, 0);
+
+// Create hollow glass ring
+// Create hollow glass ring with length parameter
+function createHollowGlassRing(
+  outerRadius,
+  innerRadius,
+  length,
+  segments,
+  outerColor = 0x00ffff,
+  innerColor = 0x808080,
+  outerOpacity = 0.5,
+  innerOpacity = 0.5,
+  transpnt = true
+) {
+  // Outer ring geometry and material
+  const outerGeometry = new THREE.CylinderGeometry(
+    outerRadius,
+    outerRadius,
+    length,
+    segments,
+    1,
+    true
+  );
+  const outerMaterial = new THREE.MeshStandardMaterial({
+    color: outerColor, // Use the outerColor parameter
+    transparent: transpnt,
+    opacity: outerOpacity, // Use the outerOpacity parameter
+    side: THREE.DoubleSide,
+  });
+
+  // Inner ring geometry and material
+  const innerGeometry = new THREE.CylinderGeometry(
+    innerRadius,
+    innerRadius,
+    length,
+    segments,
+    1,
+    true
+  );
+  const innerMaterial = new THREE.MeshStandardMaterial({
+    color: innerColor, // Use the innerColor parameter
+    transparent: transpnt,
+    opacity: innerOpacity, // Use the innerOpacity parameter
+    side: THREE.DoubleSide,
+  });
+
+  // Create outer and inner ring meshes
+  const outerRing = new THREE.Mesh(outerGeometry, outerMaterial);
+  const innerRing = new THREE.Mesh(innerGeometry, innerMaterial);
+  innerRing.position.z = 0;
+
+  // Create a group and add both outer and inner rings
+  const ringGroup = new THREE.Group();
+  ringGroup.add(outerRing);
+  ringGroup.add(innerRing);
+
+  return ringGroup;
+}
+
+const hollowRing = createHollowGlassRing(1.2, 0.4, 0.3, 64); // Adjust thickness of the ring
+
+scene.add(hollowRing);
+hollowRing.position.set(6.7, -1, 0);
+hollowRing.rotation.z = Math.PI / 2;
+// create group for tube and ring
+const tubeRing = new THREE.Group();
+tubeRing.add(tube);
+tubeRing.add(hollowRing);
+scene.add(tubeRing);
 // Add OrbitControls for better camera movement
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.update();
+
+// Clone of the groups
+function deepCloneGroupWithUniqueElements(originalGroup) {
+  const newGroup = new THREE.Group();
+
+  originalGroup.children.forEach((child) => {
+    const clonedChild = child.clone();
+
+    // Clone the geometry and material to ensure unique elements
+    clonedChild.geometry = child.geometry.clone();
+    clonedChild.material = child.material.clone();
+
+    // If the material has textures, clone those too
+    if (child.material.map) {
+      clonedChild.material.map = child.material.map.clone();
+      clonedChild.material.map.needsUpdate = true;
+    }
+
+    // Copy position, rotation, and scale for proper transformation
+    clonedChild.position.copy(child.position);
+    clonedChild.rotation.copy(child.rotation);
+    clonedChild.scale.copy(child.scale);
+
+    newGroup.add(clonedChild);
+  });
+
+  return newGroup;
+}
+
+const jarClone = deepCloneGroupWithUniqueElements(group);
+console.log(jarClone.children); // Inspect the cloned elements
+//const jarClone = group.clone();
+scene.add(jarClone);
+jarClone.remove(negativePlate);
+//jarClone.position.x = 12;
+const tubeRingClone = tubeRing.clone();
+//const tubeRingClone = deepCloneGroupWithUniqueElements(tubeRing);
+scene.add(tubeRingClone);
+// Membrane
+
+// Paper membrane
+//(1.2, 0.4, 0.3, 64)
+const membrane = createHollowGlassRing(
+  1.2, // outerRadius
+  0, // innerRadius
+  0.2, // length
+  64, // segments
+  0xff0000, // outerColor (red)
+  0xffffff, // innerColor (blue)
+  1, // outerOpacity (70% opacity)
+  1, // innerOpacity (30% opacity)
+  false
+);
+scene.add(membrane);
+
+// positions of groups
+group.position.set(-10, -1, 0);
+jarClone.position.set(3, -1, 0);
+tubeRing.position.set(-10, -1, 0);
+tubeRingClone.position.set(3, -1, 0);
+membrane.position.set(-3.5, -2, 0);
+
+// Bridge group
+
+const bridgeGroup = new THREE.Group();
+bridgeGroup.add(tubeRing);
+bridgeGroup.add(tubeRingClone);
+bridgeGroup.add(membrane);
+scene.add(bridgeGroup);
+bridgeGroup.position.set(0, 0.5, 0);
+
+// rotations of grups
+
+tubeRingClone.rotation.y = Math.PI / 2;
+tubeRingClone.rotation.y = Math.PI;
+membrane.rotation.z = Math.PI / 2;
+jarClone.rotation.y = Math.PI / 2;
+jarClone.rotation.y = Math.PI;
+
+function createVerticalHollowLShapedTube(
+  radius,
+  length1,
+  length2,
+  thickness,
+  segments,
+  color = 0x00ffff, // Default color
+  transparency = true, // Default to transparent
+  opacity = 0.5 // Default opacity
+) {
+  // Create the cross-section shape using circles
+  const outerRadius = radius;
+  const innerRadius = radius - thickness;
+
+  const shape = new THREE.Shape();
+
+  // Outer circle
+  const outerCircle = new THREE.Path();
+  outerCircle.absarc(0, 0, outerRadius, 0, Math.PI * 2, false);
+  shape.add(outerCircle);
+
+  // Inner circle (hole)
+  const innerCircle = new THREE.Path();
+  innerCircle.absarc(0, 0, innerRadius, 0, Math.PI * 2, true);
+  shape.holes.push(innerCircle);
+
+  // Define the path for extrusion (L shape)
+  const path = new THREE.CurvePath();
+  path.add(
+    new THREE.LineCurve3(
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(0, length1, 0)
+    )
+  );
+  path.add(
+    new THREE.LineCurve3(
+      new THREE.Vector3(0, length1, 0),
+      new THREE.Vector3(length2, length1, 0)
+    )
+  );
+
+  // Define extrusion settings
+  const extrudeSettings = {
+    steps: segments,
+    bevelEnabled: false,
+    extrudePath: path,
+  };
+
+  // Create the geometry
+  const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+
+  // Create material with parameters
+  const material = new THREE.MeshStandardMaterial({
+    color: color,
+    transparent: transparency,
+    opacity: opacity,
+    side: THREE.DoubleSide,
+    metalness: 1,
+    roughness: 0.3,
+  });
+
+  // Create mesh
+  const mesh = new THREE.Mesh(geometry, material);
+
+  // Rotate the tube to make it vertical
+  mesh.rotation.z = Math.PI / 2; // Rotate 90 degrees around Z axis
+
+  return mesh;
+}
+
+// Usage example
+const lShapedTube = createVerticalHollowLShapedTube(0.2, 1, 2, 0.1, 32);
+const rShapedTube = createVerticalHollowLShapedTube(0.2, 1, 1, 0.1, 32);
+const cO2ShapedTube = createVerticalHollowLShapedTube(
+  0.2,
+  1,
+  4,
+  0.1,
+  32,
+  0xff0000, // Custom color (red)
+  true, // Transparency
+  0.5 // Opacity
+);
+scene.add(lShapedTube);
+scene.add(rShapedTube);
+scene.add(cO2ShapedTube);
+
+lShapedTube.rotation.x = Math.PI;
+lShapedTube.castShadow = true;
+lShapedTube.position.set(6, 2.7, 0);
+rShapedTube.rotation.x = Math.PI;
+rShapedTube.castShadow = true;
+rShapedTube.rotation.y = Math.PI;
+rShapedTube.position.set(-13, 2.7, 0);
+cO2ShapedTube.rotation.x = Math.PI;
+cO2ShapedTube.castShadow = true;
+cO2ShapedTube.rotation.y = Math.PI / 2;
+cO2ShapedTube.position.set(3, 2.7, 3);
+//lShapedTube.rotation.z = 1 * Math.PI;
+
+// track the objects added to scene
+// Function to log all objects with their names
+function logSceneObjects() {
+  console.log("Objects in the scene:");
+  for (const name in trackedObjects) {
+    if (trackedObjects.hasOwnProperty(name)) {
+      console.log(`Name: ${name}, Object:`, trackedObjects[name]);
+    }
+  }
+}
+
+logSceneObjects();
+//const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+directionalLight.position.set(10, 1, 10).normalize();
 
 // Animation loop
 function animate() {
