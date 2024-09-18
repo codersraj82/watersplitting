@@ -744,10 +744,10 @@ function createThickHollowStraightTube(
     true
   );
   const innerMaterial = new THREE.MeshStandardMaterial({
-    color: 0xffffff,
+    color: 0xbdcbfe,
     transparent: true,
     //transmission: 1,
-    opacity: 0.2, // Less transparent
+    opacity: 0.5, // Less transparent
 
     side: THREE.DoubleSide,
     roughness: 0,
