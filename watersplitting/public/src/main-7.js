@@ -8,7 +8,7 @@ import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
 
 // Set up the basic Three.js scene
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x818589);
+scene.background = new THREE.Color(0x808080);
 
 // Set up camera
 const camera = new THREE.PerspectiveCamera(
@@ -52,12 +52,12 @@ groundBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0); // Rotate to be flat
 world.addBody(groundBody);
 
 // Add a ground plane in Three.js
-const groundGeometry = new THREE.PlaneGeometry(100, 75);
+const groundGeometry = new THREE.PlaneGeometry(100, 100);
 const groundMaterial = new THREE.MeshStandardMaterial({ color: 0xa0522d });
 const ground = new THREE.Mesh(groundGeometry, groundMaterial);
 ground.position.set(0, -1, 0);
 ground.rotation.x = -Math.PI / 2; // Rotate to be flat
-//ground.receiveShadow = true;
+ground.receiveShadow = true;
 
 // function to give name to objects of three.js
 
@@ -621,16 +621,9 @@ loader.load("/fonts/helvetiker_bold.typeface.json", function (font) {
     curveSegments: 12,
     bevelEnabled: false,
   });
-  const glassElectrodetextGeometry = new TextGeometry("Reference Electrode", {
-    font: font,
-    size: 0.4,
-    height: 0.1,
-    curveSegments: 12,
-    bevelEnabled: false,
-  });
 
   // Create Material for the text
-  const textMaterial = new THREE.MeshStandardMaterial({ color: 0xffc300 });
+  const textMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
 
   // Create Mesh for both texts
   const copyrightTextMesh = new THREE.Mesh(copyrightTextGeometry, textMaterial);
@@ -645,10 +638,6 @@ loader.load("/fonts/helvetiker_bold.typeface.json", function (font) {
   const C1C2TextMesh = new THREE.Mesh(C1C2extGeometry, textMaterial);
   const gasproductTextMesh = new THREE.Mesh(
     gasproductextGeometry,
-    textMaterial
-  );
-  const glasselectrodeTextMesh = new THREE.Mesh(
-    glassElectrodetextGeometry,
     textMaterial
   );
   const developedByTextMesh = new THREE.Mesh(
@@ -668,7 +657,6 @@ loader.load("/fonts/helvetiker_bold.typeface.json", function (font) {
   scene.add(OERTextMesh);
   scene.add(ECRTextMesh);
   scene.add(gasproductTextMesh);
-  scene.add(glasselectrodeTextMesh);
   scene.add(C1C2TextMesh);
   // Text label positions
   oxygenTextMesh.position.set(-14, 3, 0);
@@ -677,7 +665,6 @@ loader.load("/fonts/helvetiker_bold.typeface.json", function (font) {
   OERTextMesh.position.set(-10, 4.5, 0);
   ECRTextMesh.position.set(1, 4.5, 0);
   gasproductTextMesh.position.set(5, 3, 0);
-  glasselectrodeTextMesh.position.set(3.5, 3.5, -1);
   C1C2TextMesh.position.set(7, -2, 0);
 
   copyrightTextMesh.rotation.y = Math.PI / 4;
@@ -1143,142 +1130,6 @@ directionalLight1.position.set(10, 1, 10).normalize();
 const directionalLight2 = new THREE.DirectionalLight(0xffffff, 1);
 directionalLight2.position.set(5, 7, 6).normalize();
 
-/****** Referece electrode**** */
-
-// Parameters
-const height = 5; // Height of the entire electrode rod
-const radius = 0.3; // Radius of the glass cylinder
-const extrusionHeight = 0.2; // Height of the extruded part at the bottom
-const plasticHeight = height / 4; // Height of the black plastic top
-const wireRadius = 0.03; // Radius of the platinum wire
-
-// Glass Cylinder
-const glassGeometry = new THREE.CylinderGeometry(
-  radius,
-  radius,
-  height - plasticHeight - extrusionHeight,
-  32
-);
-const rodglassMaterial = new THREE.MeshStandardMaterial({
-  color: 0xcbfafe,
-  transparent: true,
-  opacity: 0.3,
-  side: THREE.DoubleSide,
-});
-const glassCylinder = new THREE.Mesh(glassGeometry, rodglassMaterial);
-scene.add(glassCylinder);
-
-// Black Plastic Top
-const plasticGeometry = new THREE.CylinderGeometry(
-  radius,
-  radius,
-  plasticHeight,
-  32
-);
-const plasticMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
-const plasticTop = new THREE.Mesh(plasticGeometry, plasticMaterial);
-plasticTop.position.y = (height - plasticHeight) / 2; // Position it at the top
-scene.add(plasticTop);
-
-// Extruded Narrow Bottom
-const extrudedGeometry = new THREE.CylinderGeometry(
-  radius / 2,
-  radius / 2,
-  extrusionHeight,
-  32
-);
-const extrudedMaterial = new THREE.MeshStandardMaterial({ color: 0xcbfafe });
-const extrudedBottom = new THREE.Mesh(extrudedGeometry, extrudedMaterial);
-extrudedBottom.position.y = -(height - extrusionHeight) / 2; // Position it at the bottom
-scene.add(extrudedBottom);
-
-// Platinum Wire
-const wireGeometry = new THREE.CylinderGeometry(
-  wireRadius,
-  wireRadius,
-  height - plasticHeight,
-  32
-);
-const wireGeometry1 = new THREE.CylinderGeometry(wireRadius, wireRadius, 1, 32);
-const wireMaterial = new THREE.MeshStandardMaterial({ color: 0xcccccc }); // Platinum-like color
-const wireMaterial1 = new THREE.MeshStandardMaterial({ color: 0xcccccc }); // Platinum-like color
-const platinumWire = new THREE.Mesh(wireGeometry, wireMaterial);
-const platinumWire1 = new THREE.Mesh(wireGeometry1, wireMaterial1);
-platinumWire.position.y = 0; // Centered along the height
-platinumWire1.position.set(3.5, 3, -0.8); // Centered along the height
-scene.add(platinumWire);
-scene.add(platinumWire1);
-
-// Usage Example
-const glassElectrodeGroup = new THREE.Group();
-glassElectrodeGroup.add(glassCylinder);
-glassElectrodeGroup.add(plasticTop);
-glassElectrodeGroup.add(extrudedBottom);
-glassElectrodeGroup.add(platinumWire);
-// glassElectrodeGroup.add(platinumWire1);
-scene.add(glassElectrodeGroup);
-glassElectrodeGroup.position.set(3.5, 0.1, -0.8);
-
-// Add lighting and camera setup here
-
-// Camea movment for animation clip
-
-// Variables for camera movement
-let targetPosition = new THREE.Vector3(1, 2.5, 10); // Final fixed position
-let orbitRadius = 10; // Radius for the orbiting camera
-let orbitSpeed = 0.2; // Speed for orbiting around the center
-let orbiting = false; // Initially, orbiting is false
-let orbitStartTime = 0;
-let orbitComplete = false; // To track if one full orbit is done
-
-// Set initial camera position far away
-camera.position.set(0, 50, 15);
-
-// Function to move the camera from far away to the fixed position
-function moveCameraToFixedPosition() {
-  if (camera.position.distanceTo(targetPosition) > 0.1) {
-    let direction = new THREE.Vector3()
-      .subVectors(targetPosition, camera.position)
-      .normalize();
-    let cameraSpeed = 0.3; // Speed to move to the fixed position
-    camera.position.addScaledVector(direction, cameraSpeed);
-    camera.lookAt(new THREE.Vector3(0, 0, 0)); // Look at the center of the scene
-  } else {
-    // Once camera reaches the target position, stop moving and start orbiting
-    camera.position.copy(targetPosition);
-    camera.lookAt(new THREE.Vector3(0, 0, 0));
-    orbiting = true; // Start orbiting after reaching the fixed position
-    orbitStartTime = Date.now();
-  }
-}
-
-// Function to make the camera orbit around the scene
-function orbitCamera() {
-  if (orbiting && !orbitComplete) {
-    const time = (Date.now() - orbitStartTime) * 0.001; // Time since orbiting started
-    const x = Math.sin(time * orbitSpeed) * orbitRadius;
-    const z = Math.cos(time * orbitSpeed) * orbitRadius;
-    camera.position.set(x, 5, z); // Keep camera orbiting at y = 5
-    camera.lookAt(0, 0, 0); // Always look at the center
-
-    // Check if a full orbit is complete (approximately 6.28 radians for a full circle)
-    if (time * orbitSpeed >= Math.PI * 2) {
-      orbitComplete = true;
-      stopOrbiting();
-    }
-  }
-}
-
-// Function to stop orbiting and return to the fixed position
-function stopOrbiting() {
-  orbiting = false;
-  orbitComplete = true;
-
-  // Move the camera back to the final fixed position
-  camera.position.copy(targetPosition);
-  camera.lookAt(new THREE.Vector3(0, 0, 0)); // Look at the center of the scene
-}
-
 // Animation loop
 function animate() {
   requestAnimationFrame(animate);
@@ -1303,17 +1154,6 @@ function animate() {
   // Update octahedron rotation and vibration
   octahedron.rotation.x += 1;
   octahedron.rotation.z += 0.001;
-
-  // camer movment update
-  if (!orbiting && !orbitComplete) {
-    // Move the camera from far to the fixed position initially
-    moveCameraToFixedPosition();
-  }
-
-  // Start orbiting around the scene after reaching the fixed position
-  if (orbiting && !orbitComplete) {
-    orbitCamera();
-  }
 
   // Update sceneComponent if necessary
 
