@@ -170,6 +170,7 @@ class PSUComponent extends THREE.Object3D {
     // Create the materials for the sockets
     const redMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
     const blueMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff });
+    const greenMaterial = new THREE.MeshStandardMaterial({ color: 0x008000 });
 
     // Create two banana female sockets on the front face of PSU box
     const createSocket = (position, material) => {
@@ -212,9 +213,15 @@ class PSUComponent extends THREE.Object3D {
       -offsetY, // Y position
       frontFaceZ
     ); // Z position on the front face
+    const leftSocketPosition3 = new THREE.Vector3(
+      offsetX, // X position
+      -offsetY, // Y position
+      frontFaceZ
+    ); // Z position on the front face
 
     this.socket1 = createSocket(leftSocketPosition1, redMaterial);
     this.socket2 = createSocket(leftSocketPosition2, blueMaterial);
+    this.socket3 = createSocket(leftSocketPosition3, greenMaterial);
 
     // Attach sockets' physics bodies to PSU box physics body
     this.psuBody.addShape(
@@ -233,6 +240,14 @@ class PSUComponent extends THREE.Object3D {
         leftSocketPosition2.z
       )
     );
+    this.psuBody.addShape(
+      new CANNON.Cylinder(0.1, 0.1, 0.2, 16),
+      new CANNON.Vec3(
+        leftSocketPosition3.x,
+        leftSocketPosition3.y,
+        leftSocketPosition3.z
+      )
+    );
   }
 
   updatePhysics() {
@@ -241,12 +256,15 @@ class PSUComponent extends THREE.Object3D {
     this.quaternion.copy(this.psuBody.quaternion);
 
     // Ensure the sockets' positions are updated accordingly
-    if (this.socket1 && this.socket2) {
+    if (this.socket1 && this.socket2 && this.socket3) {
       this.socket1.socket.position.copy(
         this.psu.position.clone().add(new THREE.Vector3(-4.5, 0.5, 3))
       );
       this.socket2.socket.position.copy(
         this.psu.position.clone().add(new THREE.Vector3(-4.5, -0.5, 3))
+      );
+      this.socket3.socket.position.copy(
+        this.psu.position.clone().add(new THREE.Vector3(-4.5, 0.05, 3))
       );
     }
   }

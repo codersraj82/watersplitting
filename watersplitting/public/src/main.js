@@ -104,7 +104,7 @@ world.addConstraint(psuLockConstraint);
 // Add cable
 const cable = new CableComponent(scene, world, {
   length: 2, // Custom length of the cable
-  numSegments: 300, // Number of segments
+  numSegments: 200, // Number of segments
   radius: 0.15, // Radius of the cable
   color: 0xff0000, // Cable color (red)
   startPosition: [-6.4, 7.1, -11], // Starting position of the cable
@@ -113,11 +113,20 @@ const cable = new CableComponent(scene, world, {
 // Add cable
 const cable1 = new CableComponent(scene, world, {
   length: 2, // Custom length of the cable
-  numSegments: 300, // Number of segments
+  numSegments: 200, // Number of segments
   radius: 0.15, // Radius of the cable
   color: 0x0000ff, // Cable color (blue)
   startPosition: [-6.3, 6.1, -12], // Starting position of the cable
   endPosition: [-10, 4, 0.15], // Ending position of the cable
+});
+// Add cable green
+const cable2 = new CableComponent(scene, world, {
+  length: 2, // Custom length of the cable
+  numSegments: 200, // Number of segments
+  radius: 0.15, // Radius of the cable
+  color: 0x008000, // Cable color (blue)
+  startPosition: [-7.25, 6.9, -12], // Starting position of the cable
+  endPosition: [3.5, 3.4, -0.8], // Ending position of the cable
 });
 
 /************* experiment setup************** */
@@ -1292,6 +1301,7 @@ function animate() {
   psu.updatePhysics();
   cable.update();
   cable1.update();
+  cable2.update();
   // Generate and update bubbles
   generateBubbles();
 
