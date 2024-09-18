@@ -181,7 +181,7 @@ const waveShader = {
 
     void main() {
       // Use a subtle color and transparency for a water-like appearance
-      gl_FragColor = vec4(1.0, 1.0, 1.0, 0.1); // Slight pale yellow with transparency
+      gl_FragColor = vec4(0.2, 0.4, 0.6, 0.4); // Slight pale yellow with transparency
     }
   `,
 };
@@ -1011,10 +1011,12 @@ function createVerticalHollowLShapedTube(
 
   // Create material with parameters
   const material = new THREE.MeshStandardMaterial({
+    //color: color,
     color: color,
-    transparent: transparency,
-    opacity: opacity,
+    transparent: true,
+    opacity: 0.5,
     side: THREE.DoubleSide,
+    reflectivity: 0.5,
   });
 
   // Create mesh
@@ -1027,13 +1029,13 @@ function createVerticalHollowLShapedTube(
 }
 
 // Usage example
-const lShapedTube = createVerticalHollowLShapedTube(0.2, 1, 2, 0.1, 32);
-const rShapedTube = createVerticalHollowLShapedTube(0.2, 1, 2, 0.1, 32);
+const lShapedTube = createVerticalHollowLShapedTube(0.2, 1, 1.5, 0.05, 32);
+const rShapedTube = createVerticalHollowLShapedTube(0.2, 1, 1.5, 0.05, 32);
 const cO2ShapedTube = createVerticalHollowLShapedTube(
   0.2,
   1,
   4,
-  0.1,
+  0.05,
   32,
   0xff0000, // Custom color (red)
   true, // Transparency
